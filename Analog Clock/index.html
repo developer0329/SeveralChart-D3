@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			circle{
+				fill: none;
+				stroke: black;
+			}
+			
+			.m-tick, .h-tick{
+				fill: black;
+				stroke: #ff3396;
+			}
+			.second-label, .hours-label{
+				font-size:10px;
+			}
+			.second-hand{
+				stroke-width:2;
+			}
+
+			.minute-hand{
+				stroke-width:5;
+				stroke-linecap:round;
+			}
+
+			.hour-hand{
+				stroke-width:7;
+				stroke-linecap:round;
+			}
+			.second-hand, .minute-hand, .hour-hand{
+				stroke:black;
+			}
+			text {
+			  -webkit-user-select: none;
+			  -moz-user-select: none;
+			  user-select: none;
+			  font-size:11px;
+		   }
+		</style>
+		<script src="http://d3js.org/d3.v3.min.js"></script>
+		<script src="moment.js"></script>
+		<script src="moment-timezone-with-data.js"></script>
+	</head>
+	<body>
+		<div style="text-align: center">
+			<div id="chart"></div>
+		</div>
+	</body>
+	<script>
+		
+		// SVG Size
+		var w = 500, h = 500;
+		// Radius for Minute and Hour
+		var mR = 35, hR = 55, margin = 0;
+		// Radius for Out Band
+		var oR = 75, spacing = 10, marker = 0.015;
+		// Interval for Minutes and Hours
+		var mInterval = 360 / 12;
+		var hInterval = 360 / 24;
+		var radians = 0.0174532925; 
+		
+		var secondLabelRadius = mR + 10;
+		var hourLabelRadius = hR + 20;
+		var secondLabelYOffset = 5;
+		var hourLabelYOffset = 5;
+		var hourHandLength = 4 * hR / 5;
+		var minuteHandLength = hR * 8 / 7;
+		var secondHandLength = hR;
+		var secondHandBalance = 30;
+		
+		function convertToServerTimeZone(date){
+			var utcTime = date.getUTCHours();
+			var estTime = new Date();
+			estTime.setHours(utcTime-5);
+			
+			return estTime;
+		}
+
+		// Time Scale Variable
+		var hourScale = d3.scale.linear()
+			.range([0,345])
+			.domain([0,23]);
+	
+		var minuteScale = secondScale = d3.scale.linear()
+			.range([0,354])
+			.domain([0,59]);
+		
+		// Data for Clock Hands
+		var handData = [
+			{
+				type:'hour',
+				value:0,
+				length:-hourHandLength,
+				scale:hourScale
+			},
+			{
+				type:'minute',
+				value:0,
+				length:-minuteHandLength,
+				scale:minuteScale
+			},
+			{
+				type:'second',
+				value:0,
+				length:-secondHandLength,
+				scale:secondScale,
+				balance:secondHandBalance
+			}
+		];
+		
+		/**
+		*   Variables of Out Bands		* 
+		**/
+		var formatSecond = d3.time.format("%-S seconds"),
+			formatMinute = d3.time.format("%-M minutes"),
+			formatHour = d3.time.format("%-H hours"),
+			formatDay = d3.time.format("%A"),
+			formatDate = function(d) { d = d.getDate(); switch (10 <= d && d <= 19 ? 10 : d % 10) { case 1: d += "st"; break; case 2: d += "nd"; break; case 3: d += "rd"; break; default: d += "th"; break; } return d; },
+			formatMonth = d3.time.format("%B");
+		
+		var color = d3.scale.category20();
+		// Main Arc for OutBand	
+		var arcBody = d3.svg.arc()
+			.startAngle(0)
+			.endAngle(function(d) { return 2 * Math.PI; })
+			.innerRadius(function(d) { return d.index * spacing + oR; })
+			.outerRadius(function(d) { return (d.index + 1) * spacing + oR; })
+			.cornerRadius(6);
+		// Color Range Arc of OutBand
+		var arcCenter = d3.svg.arc()
+			.startAngle(function(d) { return d.start * 2 * Math.PI; })
+			.endAngle(function(d) { return d.value * 2 * Math.PI; })
+			.innerRadius(function(d) { return d.index * spacing + oR; })
+			.outerRadius(function(d) { return (d.index + 1) * spacing + oR; });
+		
+		// Draw Clock
+		function drawClock(){ //create all the clock elements
+			// Update Time
+			updateData();
+			// SVG
+			var svg = d3.select("#chart").append("svg")
+						.attr("width", w)
+						.attr("height", h);
+						
+			var defs = svg.append("defs");
+			
+			defs.append('pattern')
+				.attr('id', 'pattern1')
+				.attr('patternUnits', 'userSpaceOnUse')
+				.attr('width', 4)
+				.attr('height', 4)
+			  .append('path')
+				.attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+				.attr('stroke', '#FFFFFF')
+				.attr('stroke-width', 1.5);
+			
+			defs.append("pattern")
+					.attr({ id:"pattern2", width:"8", height:"8", patternUnits:"userSpaceOnUse", patternTransform:"rotate(-45)"})
+				.append("rect")
+					.attr({ width:"4", height:"8", transform:"translate(0,0)", fill:"#88AAEE" });
+			
+			defs.append("pattern")
+					.attr({ id:"pattern3", width:"10", height:"10", patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)"})
+				.append("rect")
+					.attr({ width:"4", height:"8", transform:"translate(0,0)", fill:"#1199DD" });
+			defs.append("pattern")
+					.attr({ id:"pattern4", width:"10", height:"10", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSJ3aGl0ZSIgLz4KICA8Y2lyY2xlIGN4PSIxIiBjeT0iMSIgcj0iMSIgZmlsbD0iYmxhY2siLz4KPC9zdmc+")
+					.attr({ x:"0", y:"0", width:"5", height:"5"});
+			
+			defs.append("pattern")
+					.attr({ id:"pattern5", width:"6", height:"6", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSd3aGl0ZScgLz4KICA8Y2lyY2xlIGN4PScyLjUnIGN5PScyLjUnIHI9JzIuNScgZmlsbD0nYmxhY2snLz4KPC9zdmc+")
+					.attr({ x:"0", y:"0", width:"3", height:"3"});
+			defs.append("pattern")
+					.attr({ id:"pattern6", width:"5", height:"5", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSd3aGl0ZScvPgogIDxwYXRoIGQ9J00tMSwxIGwyLC0yCiAgICAgICAgICAgTTAsMTAgbDEwLC0xMAogICAgICAgICAgIE05LDExIGwyLC0yJyBzdHJva2U9J2JsYWNrJyBzdHJva2Utd2lkdGg9JzEnLz4KPC9zdmc+Cg==")
+					.attr({ x:"0", y:"0", width:"2", height:"2"});
+			
+			defs.append("pattern")
+					.attr({ id:"pattern7", width:"6", height:"6", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSd3aGl0ZScgLz4KICA8cmVjdCB4PScwJyB5PScwJyB3aWR0aD0nMScgaGVpZ2h0PScxJyBmaWxsPSdibGFjaycgLz4KPC9zdmc+")
+					.attr({ x:"0", y:"0", width:"3", height:"3"});
+			
+			defs.append("pattern")
+					.attr({ id:"pattern8", width:"10", height:"10", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjNDAzYzNmIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDBMOCA4Wk04IDBMMCA4WiIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2U9IiMxZTI5MmQiPjwvcGF0aD4KPC9zdmc+")
+					.attr({ x:"0", y:"0", width:"8", height:"8"});
+			defs.append("pattern")
+					.attr({ id:"pattern9", width:"6", height:"10", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjOWU5ZTllIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDVMNSAwWk02IDRMNCA2Wk0tMSAxTDEgLTFaIiBzdHJva2U9IiM4ODgiIHN0cm9rZS13aWR0aD0iMSI+PC9wYXRoPgo8L3N2Zz4=")
+					.attr({ x:"0", y:"0", width:"10", height:"5"});
+			defs.append("pattern")
+					.attr({ id:"pattern10", width:"5", height:"5", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0iI2ZmZiI+PC9yZWN0Pgo8cmVjdCB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNjY2MiPjwvcmVjdD4KPHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNjY2MiPjwvcmVjdD4KPC9zdmc+")
+					.attr({ x:"0", y:"0", width:"3", height:"3"});
+			defs.append("pattern")
+					.attr({ id:"pattern11", width:"5", height:"5", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MCIgaGVpZ2h0PSI3MCI+CjxyZWN0IHdpZHRoPSI3MCIgaGVpZ2h0PSI3MCIgZmlsbD0iI2JiZDgxNyI+PC9yZWN0Pgo8ZyB0cmFuc2Zvcm09InJvdGF0ZSg0NSkiPgo8cmVjdCB3aWR0aD0iOTkiIGhlaWdodD0iMjUiIGZpbGw9IiNhOWNlMDAiPjwvcmVjdD4KPHJlY3QgeT0iLTUwIiB3aWR0aD0iOTkiIGhlaWdodD0iMjUiIGZpbGw9IiNhOWNlMDAiPjwvcmVjdD4KPC9nPgo8L3N2Zz4=")
+					.attr({ x:"0", y:"0", width:"3", height:"3"});
+			defs.append("pattern")
+					.attr({ id:"pattern12", width:"10", height:"5", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiPgo8ZGVmcz4KPHJlY3QgaWQ9InIiIHdpZHRoPSIzMCIgaGVpZ2h0PSIxNSIgZmlsbD0iI2JiMDg1ZiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZT0iIzdhMDU0ZCI+PC9yZWN0Pgo8ZyBpZD0icCI+Cjx1c2UgeGxpbms6aHJlZj0iI3IiPjwvdXNlPgo8dXNlIHk9IjE1IiB4bGluazpocmVmPSIjciI+PC91c2U+Cjx1c2UgeT0iMzAiIHhsaW5rOmhyZWY9IiNyIj48L3VzZT4KPHVzZSB5PSI0NSIgeGxpbms6aHJlZj0iI3IiPjwvdXNlPgo8L2c+CjwvZGVmcz4KPHVzZSB4bGluazpocmVmPSIjcCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtMjUpIHNrZXdZKDQwKSI+PC91c2U+Cjx1c2UgeGxpbms6aHJlZj0iI3AiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMwIDApIHNrZXdZKC00MCkiPjwvdXNlPgo8L3N2Zz4=")
+					.attr({ x:"0", y:"0", width:"5", height:"5"});
+			defs.append("pattern")
+					.attr({ id:"pattern13", width:"5", height:"10", patternUnits:"userSpaceOnUse"})
+				.append("image")
+					.attr('xlink:href', "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDIwIDIwIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjOGEzIj48L3JlY3Q+CjxjaXJjbGUgcj0iOS4yIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZT0iIzYxMyIgZmlsbD0ibm9uZSI+PC9jaXJjbGU+CjxjaXJjbGUgY3k9IjE4LjQiIHI9IjkuMiIgc3Ryb2tlLXdpZHRoPSIxcHgiIHN0cm9rZT0iIzYxMyIgZmlsbD0ibm9uZSI+PC9jaXJjbGU+CjxjaXJjbGUgY3g9IjE4LjQiIGN5PSIxOC40IiByPSI5LjIiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlPSIjNjEzIiBmaWxsPSJub25lIj48L2NpcmNsZT4KPC9zdmc+")
+					.attr({ x:"0", y:"0", width:"5", height:"5"});					
+					
+			var radialGradient = defs.append("radialGradient")
+				.attr("id", "radial-gradient");
+
+			radialGradient.append("stop")
+				.attr("offset", "6.667%")
+				.attr("stop-color", "#ffcce5");
+			radialGradient.append("stop")
+				.attr("offset", "13.334%")
+				.attr("stop-color", "#ffb3d7");
+			radialGradient.append("stop")
+				.attr("offset", "20.001%")
+				.attr("stop-color", "#ff99ca");
+			radialGradient.append("stop")
+				.attr("offset", "26.668%")
+				.attr("stop-color", "#ff80bd");
+			radialGradient.append("stop")
+				.attr("offset", "33.335%")
+				.attr("stop-color", "#ff66b0");
+			radialGradient.append("stop")
+				.attr("offset", "40.002%")
+				.attr("stop-color", "#ff4da3");
+			radialGradient.append("stop")
+				.attr("offset", "46.669%")
+				.attr("stop-color", "#ff3396");
+			radialGradient.append("stop")
+				.attr("offset", "53.336%")
+				.attr("stop-color", "#ff1a88");
+			radialGradient.append("stop")
+				.attr("offset", "60.003%")
+				.attr("stop-color", "#ff007b");
+			radialGradient.append("stop")
+				.attr("offset", "66.67%")
+				.attr("stop-color", "#e6006f");
+			radialGradient.append("stop")
+				.attr("offset", "73.337%")
+				.attr("stop-color", "#e6006f");
+			radialGradient.append("stop")
+				.attr("offset", "0%")
+				.attr("stop-color", "#cc0063");
+			radialGradient.append("stop")
+				.attr("offset", "80.004%")
+				.attr("stop-color", "#b30056");
+			radialGradient.append("stop")
+				.attr("offset", "86.671%")
+				.attr("stop-color", "#99004a");
+			radialGradient.append("stop")
+				.attr("offset", "93.338%")
+				.attr("stop-color", "#80003e");
+			radialGradient.append("stop")
+				.attr("offset", "100%")
+				.attr("stop-color", "#660031");
+			
+			// Hour Circle
+			var inCircle = svg.append("g:circle")
+							.attr("cx", w/2)
+							.attr("cy", h/2)
+							.attr("r", hR + 30)
+							.style("fill", "url(#radial-gradient)");
+							
+			// Minute and Second Circle				
+			var mCircle = svg.append("g:circle")
+							.attr("cx", w/2)
+							.attr("cy", h/2)
+							.attr("id", 'mCircle')
+							.attr("r", mR);
+			// Hour Circle
+			var hCircle = svg.append("g:circle")
+							.attr("cx", w/2)
+							.attr("cy", h/2)
+							.attr("id", 'hCircle')
+							.attr("r", hR);
+			
+			// Add Minute Ticks
+			var mTick = svg.selectAll('g')
+							.data(d3.range(0,60))
+							.enter()
+							.append('circle')
+							.attr('class', 'm-tick')
+							.attr('id', function (d, i) {
+								return "m-tick-" + i;
+							})
+							.attr("cx", w/2)
+							.attr("cy", h/2)
+							.attr('r', 3)
+							.attr('transform', function (d, i) {
+								return "translate(" + (mR * Math.cos((mInterval*i) * Math.PI/180)) + "," + (mR * Math.sin((mInterval*i) * Math.PI/180)) + ")";
+							});
+			// Add Hour Ticks(circle)
+			var hTick = svg.selectAll('g')
+							.data(d3.range(0,24))
+							.enter()
+							.append('circle')
+							.attr('class', 'h-tick')
+							.attr('id', function (d, i) {
+								return "h-tick-" + i;
+							})
+							.attr("cx", w / 2)
+							.attr("cy", h / 2)
+							.attr('r', 3)
+							.attr('transform', function (d, i) {
+								return "translate(" + (hR * Math.cos((hInterval*i) * Math.PI/180)) + "," + (hR * Math.sin((hInterval*i) * Math.PI/180)) + ")";
+							});
+			// Add Hour Ticks(polygon)
+			var hTick1 = svg.selectAll('g')
+							.data(d3.range(0,24))
+							.enter()
+							.append('polygon')
+							.attr('id', function (d, i) {
+								return "h-tick1-" + i;
+							})
+							.attr('fill', 'black')
+							.attr('stroke', "black")
+							.attr("points", "-1,3 0.5,0 2,3 0.5,2")
+							.attr('transform', function (d, i) {
+								return "translate(" + (w/2-((hR+9) * Math.cos((hInterval*i) * Math.PI/180))) + "," + (h/2-((hR+9) * Math.sin((hInterval*i) * Math.PI/180))) + ") rotate(" + (-90 + hInterval*i  )+ ")";
+							});	
+			
+			var face = svg.append('g')
+							.attr('id','clock-face')
+							.attr('transform','translate(' + ( w / 2 ) + ',' + ( h / 2 ) + ')');
+			// Add Second/Minute Labels(Number)
+			var sLabel = face.selectAll('.second-label')
+							.data(d3.range(5,61,5))
+								.enter()
+								.append('text')
+								.attr('class', 'second-label')
+								.attr('text-anchor','middle')
+								.attr("cx", w / 2)
+								.attr("cy", h / 2)
+								.attr('x',function(d){
+									return secondLabelRadius*Math.sin(secondScale(d)*radians);
+								})
+								.attr('y',function(d){
+									return -secondLabelRadius*Math.cos(secondScale(d)*radians) + secondLabelYOffset;
+								})
+								.text(function(d){
+									return d;
+								});
+			// Add Hour Labels(Number)
+			var hLabel = face.selectAll('.hours-label')
+					.data(d3.range(1,25,1))
+						.enter()
+						.append('text')
+						.attr('class', 'hours-label')
+						.attr('text-anchor','middle')
+						.attr("cx", w / 2)
+						.attr("cy", h / 2)
+						.attr('x',function(d){
+							return hourLabelRadius*Math.sin(hourScale(d)*(radians));
+						})
+						.attr('y',function(d){
+							return -hourLabelRadius*Math.cos(hourScale(d)*radians) + hourLabelYOffset;
+						})
+						.text(function(d){
+							return d;
+						});
+			
+			// Add <g>Elemnet for Colock Hands
+			var hands = face.append('g').attr('id','clock-hands');
+			
+			face.append('g').attr('id','face-overlay')
+				.append('circle').attr('class','hands-cover')
+					.attr( 'x', 0 )
+					.attr( 'y', 0 )
+					.attr( 'r', hR / 20 );
+			
+			// Add Colock Hands
+			hands.selectAll('line')
+				.data(handData)
+					.enter()
+					.append('line')
+					.attr('class', function(d){
+						return d.type + '-hand';
+					})
+					.attr('x1',0)
+					.attr('y1',function(d){
+						return d.balance ? d.balance : 0;
+					})
+					.attr('x2',0)
+					.attr('y2',function(d){
+						return d.length;
+					})
+					.attr('transform',function(d){
+						return 'rotate('+ d.scale(d.value) +')';
+					});
+					
+			// Add <g>Elemnet for Out Bands
+			var outBand = svg.append('g')
+					.attr('id','out-band')
+					.attr('transform','translate(' + ( w / 2 ) + ',' + ( h / 2 ) + ')');
+			
+			// Add Out Bands
+			var field = outBand.selectAll("g")
+				.data(fields)
+				.attr("cx", w / 2)
+				.attr("cy", h / 2)
+			  .enter().append("g");
+			// Body Arc of Out Bands
+			field.append("path")
+				.attr("class", "arc-body");
+			// Center Arc of Out Bands(Color Range)
+			field.append("path")
+				.attr("id", function(d, i) { return "arc-center-" + i; })
+				.attr("class", "arc-center")
+				.attr("fill", function(d) { return d.color1; });
+			field.append("path")
+				.attr("id", function(d, i) { return "arc-center-" + i; })
+				.attr("class", "arc-center1");
+			
+				
+			// Ballon Text of Out Bands	
+			//field.append('polygon')
+			//	.attr('id', function (d, i) {
+			//		return "h-tick1-" + i;
+			//	})
+			//	.attr('fill', function (d, i) {
+			//		return d.color;
+			//	})
+			//	.attr('stroke', function (d, i) {
+			//		return d.color;
+			//	})
+			//	.attr("points", "0,4 1.5,0 3,4 1.5,8")
+			//	.attr('transform', function (d, i) {
+			//		return "translate(" + (((d.index + 0.8)* spacing + oR) * Math.sin(d.marker * 2 * Math.PI + marker)) + "," + (((d.index + 1)* spacing + oR) * Math.cos((d.marker * 2 + 1)* Math.PI + marker)) + ") rotate(" + (d.marker*360)+")";
+			//	});
+			field.append('image')
+				.attr('id', function (d, i) {
+					return "h-tick1-" + i;
+				})
+				.attr("xlink:href",  function(d) { return d.img;})
+				.attr("width",  '10px')
+				.attr("height",  '10px')
+				.attr('transform', function (d, i) {
+					return "translate(" + (((d.index + 0.8)* spacing + oR) * Math.sin(d.marker * 2 * Math.PI + marker)) + "," + (((d.index + 1)* spacing + oR) * Math.cos((d.marker * 2 + 1)* Math.PI + marker)) + ") rotate(" + (d.marker * 360 + 90)+")";
+				})
+				;
+				
+				
+			field.append("a")
+				.attr("xlink:href", function(d, i) { return d.link; })				
+				.append("text")
+				.attr("dy", "0.75em")
+				.attr("dx", "0.95em")
+				.style("text-anchor", "start")
+			  .append("textPath")
+				.attr("startOffset", "52%")
+				.attr("class", "arc-text")
+				.attr("xlink:href", function(d, i) { return "#arc-center-" + i; })
+				
+				
+			tick();
+
+			// Update Value of Out Band
+			function tick() {
+				if (!document.hidden) field
+					.each(function(d) { this._value = d.value; })
+					.data(fields)
+					.each(function(d) { d.previousValue = this._value; })
+				.transition()
+					.ease("elastic")
+					.duration(500)
+					.each(fieldTransition);
+			}
+			
+			// OutBand Draw Effect
+			function fieldTransition() {
+				var field = d3.select(this).transition();
+
+				field.select(".arc-body")
+					.attrTween("d", arcTween(arcBody))
+					.style("stroke", "black")
+					.style("fill", "none");
+				
+				field.select(".arc-center")
+					.attrTween("d", arcTween(arcCenter));
+					
+				field.select(".arc-center1")
+					.attrTween("d", arcTween(arcCenter))
+					.style("fill",  function(d) { return 'url(#' + d.pattern + ')'; });	
+					//.style("stroke-width", function(d) { return spacing * oR; });
+
+				field.select(".arc-text")
+				  .text(function(d) { return d.text; });
+			}
+
+			function arcTween(arc) {
+				return function(d) {
+					var i = d3.interpolateNumber(d.previousValue, d.value);
+					return function(t) {
+						d.value = i(t);
+						return arc(d);
+					};
+				};
+			}
+			
+			// Data for Out Bands
+			function fields() {
+				var now = new Date;
+				/**
+				* 	index: Define Radius of a Out Band
+				*	text : Define Ballon Text of a Out Band
+				*   value : Define End Value of a Out Band's Color Range
+				*   start : Define Start Value of a Out Band's Color Range
+				**/
+				return [
+					{index: 1, text: "Label1", value: 0.125 , start:0, link:"https://www.google.com", color:"red", marker:0.124, color1:"red", img:'img/1.png', pattern:'pattern1' },
+					{index: 2, text: "Label2", value: 0.25, start: 0, link:"https://www.facebook.com", color:"green", marker:0.25, color1:"green", img:'img/2.png', pattern:'pattern2' },
+					{index: 3, text: "Label3", value: 0.375, start:0, link:"https://twitter.com", color:"blue", marker:0.5, color1:"blue", img:'img/3.png', pattern:'pattern3'},
+					{index: 4, text: "Label4", value: 0.5 , start:0, link:"https://www.linkedin.com/", color:"yellow", marker:0.8, color1:"yellow", img:'img/4.png', pattern:'pattern4'},
+					{index: 5, text: "Label5", value: 0.625 , start:0, link:"https://www.youtube.com", color:"gray", marker:0.6, color1:"brown", img:'img/5.png', pattern:'pattern5'},
+					{index: 6, text: "Label6", value: 0.75 , start:0, link:"https://www.google.com" , color:"brown", marker:0.7, color1:"gray", img:'img/6.png', pattern:'pattern6'},
+					{index: 7, text: "Label7", value: 0.875, start: 0, link:"https://www.facebook.com", color:"#acade0", marker:0.4, color1:"lightblue", img:'img/7.png' , pattern:'pattern7'},
+					{index: 8, text: "Label8", value: 1, start:0.35, link:"https://twitter.com", color:"#3344e0", marker:0.3, color1:"lightgray", img:'img/8.png', pattern:'pattern8'},
+					{index: 9, text: "Label9", value: 1 , start:0.75, link:"https://www.linkedin.com/", color:"#33ade0", marker:0.2, color1:"lightyellow", img:'img/9.png', pattern:'pattern9'},
+					{index: 10, text: "Label10", value: 0.6 , start:0.35, link:"https://www.youtube.com", color:"#3acb90", marker:0.1, color1:"#3acbff", img:'img/10.png', pattern:'pattern10'},
+					{index: 11, text: "Label11", value: 0.675 , start:0.35, link:"https://www.google.com", color:"#336ac0", marker:0.9, color1:"red", img:'img/11.png' , pattern:'pattern11'},
+					{index: 12, text: "Label12", value: 0.8, start: 0.35, link:"https://www.facebook.com", color:"#3ab890", marker:1, color1:"green", img:'img/12.png' , pattern:'pattern12'},
+					{index: 13, text: "Label13", value: 0.925, start:0.35, link:"https://twitter.com", color:"#33cd90", marker:0.55, color1:"blue", img:'img/1.png', pattern:'pattern13'}
+				];
+			}
+		}
+		
+		
+		// Update Clock hands position
+		function moveHands(){
+			d3.select('#clock-hands').selectAll('line')
+			.data(handData)
+				.transition()
+				.attr('transform',function(d){
+					return 'rotate('+ d.scale(d.value) +')';
+				});
+		}
+		
+		function msToHMS( ms ) {
+			
+		}
+
+		// Update Time
+		function updateData(){
+			var hours = moment().tz("EST").hour();
+			var minute = moment().tz("EST").minute();
+			var second = moment().tz("EST").second();
+	
+
+			handData[0].value = hours;
+			handData[1].value = minute;
+			handData[2].value = second;
+		}
+
+		drawClock();
+		
+		setInterval(function(){
+			updateData();
+			moveHands();
+		}, 1000);
+
+		d3.select(self.frameElement).style("height", h + "px");
+
+	</script>
+</html>
