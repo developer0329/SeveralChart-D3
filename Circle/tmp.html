@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <style type="text/css">
+			body {
+			  font-size: 12px;
+			  font-family: "Times New Roman", Times, serif;
+			  overflow: hidden;
+			}
+
+			path.arc {
+			  cursor: move;
+			  fill: #fff;
+			}
+
+			.node {
+			  font-size: 12px;
+			}
+
+			.node:hover {
+			  fill: #ff0000;
+			  font-weight: bold;
+			}
+
+			.link {
+			  fill: none;
+			  stroke: #00aa00;
+			  stroke-opacity: .5;
+			  pointer-events: none;
+			}
+
+			.link-hide {
+			  stroke-opacity: 0;
+			}
+
+			.node-hide {
+			  fill: #ccc;
+			}
+
+			.link.source, .link.target {
+			  stroke-opacity: 1;
+			}
+
+			.node.target {
+			  fill: #ff0000 !important;
+			}
+
+			.link.source {
+			  stroke: #ff0000;
+			}
+
+			.node.source {
+			  fill: #0000aa;
+			}
+
+			.link.target {
+			  stroke: #0000aa;
+			}
+
+			.d3-tip {
+			  line-height: 1;
+			  font-weight: bold;
+			  padding: 12px;
+			  background: rgba(0, 0, 0, 0.8);
+			  color: #fff;
+			  border-radius: 2px;
+			}
+
+			/* Creates a small triangle extender for the tooltip */
+			.d3-tip:before {
+			  box-sizing: border-box;
+			  display: inline;
+			  font-size: 10px;
+			  width: 100%;
+			  line-height: 1;
+			  color: rgba(0, 0, 0, 0.8);
+			  content: "\25BC";
+			  position: absolute;
+			  text-align: center;
+			}
+
+			/* Style northward tooltips differently */
+			.d3-tip.n:before {
+			  margin: 0 0 10px 0;
+			  top: 100%;
+			  left: 0;
+			}
+
+		</style>
+	
+	<script src="//d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.7/d3-tip.js"></script> 
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+  </head>
+<body>
+    
+
+    <script type="text/javascript">
+
+    var config = { "filter": .9 , "freeze": false};
+    var gui = new dat.GUI();
+   
+    var filterChanger = gui.add(config, "filter", 0.7, 1.0, 0.01);
+    filterChanger.onChange(function(value) {
+      filterValue = value;
+      updateGraph(totalData, filterValue, dx);
+    });
+
+    var freezeChanger = gui.add(config, "freeze");
+    freezeChanger.onChange(function(value) {
+      freeze = value;
+    });
+
+    var w = window.innerWidth,
+        h = window.innerHeight,
+        rx = w / 2,
+        ry = h / 2,
+        m0,
+        rotate = 0;
+
+    var splines = [];
+    var totalData = null;
+    var filterValue = 0.90;
+    var nodes = [],
+        links = [];
+
+    var positiveColor = "#0000ff";
+    var negativeColor = "#ff0000";
+
+    var delay = 1000;
+    var lastModifiedDate = 0, freeze = false;
+    var minSize = 240;
+    var tension = 0.85;
+
+    var dx = Math.max(Math.min(rx, ry), minSize);
+
+    var bundle = d3.layout.bundle();
+
+    var line = d3.svg.line.radial()
+        .interpolate("bundle")
+        .tension(tension)
+        .radius(function(d) { return d.y; })
+        .angle(function(d) { return d.x / 180 * Math.PI; });
+
+    var tip = d3.tip()
+            .attr('class', 'd3-tip')
+            .offset(function(d) { 
+              return [-10, 0];
+            })
+            .html(function (d) {
+                var content = "<span><center><strong>" + d.name + "</strong></center><br/>" + 
+                        "<table><tr><th>Node</th><th>Value</th></tr>";
+
+                for(var i = 0, iLen = d.fields.length; i < iLen; i++) {
+                  content += "<tr><td>" + d.fields[i].name + "</td><td>" + d.fields[i].value + "</td></tr>";
+                }
+
+                content += "</table>";
+                return content;
+            });
+
+    var div = d3.select("body").insert("div")   
+       .attr("width", w + "px")
+       .attr("height", h + "px")
+       .style("-webkit-backface-visibility", "hidden");
+
+    var svg = div.append("svg:svg")
+        .attr("width", w + "px")
+        .attr("height", h + "px")
+      .append("svg:g")
+        .classed("context", true)
+        .attr("transform", "translate(" + w / 2 + "," + h / 2 + ")");
+
+    svg.call(tip);
+
+    svg.append("svg:path")
+        .attr("class", "arc")
+        .attr("d", d3.svg.arc().outerRadius(dx-120).innerRadius(0).startAngle(0).endAngle(2 * Math.PI))
+        .on("mousedown", mousedown);
+
+    function updateGraph(data, filter, radius) {
+
+      var cluster = d3.layout.cluster()
+        .size([360, radius - 120])
+        .sort(function(a, b) { return d3.ascending(a.key, b.key); });
+
+      var root = { children: [] };
+	
+	
+		
+		  for(var i = 0; i < data.length; i++)
+		  {
+			var entityName = data[i][""].trim();
+
+			root.children.push({
+			  name: entityName,
+			  parent: root,
+			  key: entityName.replace(/[&., ()]/g , "-"),
+			  children: [],
+			  fields: [],
+			  values: data[i]
+			});
+		  }
+
+      nodes = cluster.nodes(root);
+
+      links = [];
+      for(var i = 1, iLen = nodes.length; i < iLen; i++)
+      {
+        for (var j = i + 1, jLen = iLen; j < jLen; j++) {
+          var corrValue = parseFloat(nodes[i].values[ nodes[j].name ]);
+
+          if(Math.abs(corrValue) < filter) continue;
+
+          nodes[i].fields.push({
+            name: nodes[j].name,
+            value: corrValue
+          });
+
+          nodes[j].fields.push({
+            name: nodes[i].name,
+            value: corrValue
+          });
+
+          links.push(
+            {
+              source: nodes[i],
+              target: nodes[j],
+              value: corrValue
+            }
+          );
+        }
+      }
+
+      splines = bundle(links);
+
+      var path = svg.selectAll("path.link")
+          .data(links);
+
+      path.enter().insert("svg:path");
+
+      path.transition()
+          .duration(500)
+          .attr("class", function(d) { return "link source-" + d.source.key + " target-" + d.target.key; })
+          .attr("node-from", function(d) { return d.source.key })
+          .attr("node-to", function(d) { return d.target.key })
+          .style("stroke-width", function(d) { return Math.sqrt(d.value * 5); })
+		  //.style("stroke-width", '2px')
+          .style("stroke", function(d) { return (d.value < 0) ? negativeColor : positiveColor})
+          .attr("d", function(d, i) { return line(splines[i]); });
+
+      path.exit().remove();
+
+      var node = svg.selectAll("g.node")
+          .data(nodes.filter(function(n) { return !n.children; }));
+
+      node.enter().insert("svg:g")
+          .on("click", mouseclick);
+
+
+      node.transition()
+          .duration(500)
+          .attr("class", "node")
+          .attr("id", function(d) { return "node-" + d.key; })
+          .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; });
+
+      node.exit().remove();
+
+      var nodeText = node.selectAll("text")
+          .data(function(d) {
+            return [d]; 
+          });
+
+      nodeText.enter().insert("svg:text")
+          .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
+          .attr("dy", ".31em")
+          .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+          .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
+          .text(function(d) { return d.name; })
+          .on("mouseover", mouseover)
+          .on("mouseout", mouseout);
+
+      nodeText.exit().remove();
+    }
+
+    function loadData() {
+      d3.csv("table.csv?" + $.now(), function(data) {
+        initGraph();
+		totalData = data;
+        updateGraph(totalData, filterValue, dx);
+      });
+    }
+	
+	function initGraph(){
+		svg.selectAll('*').remove();
+	}
+
+    function refresh() {
+      if(freeze) {
+        return;
+      }
+      
+      $.getJSON( "update.php?" + $.now(), function(data) {
+        if(lastModifiedDate < data.lastModifiedDate) {
+          lastModifiedDate = data.lastModifiedDate;
+          setTimeout(loadData, delay);
+        }
+      })
+    }
+
+    d3.select(window)
+      .on("mousemove", mousemove)
+      .on("mouseup", mouseup)
+      .on("resize", function() {
+
+        w = window.innerWidth;
+        h = window.innerHeight;
+
+        rx = w / 2;
+        ry = h / 2;
+
+        dx = Math.min(rx, ry);
+        div
+          .attr("width", w + "px")
+          .attr("height", h + "px");
+
+        d3.selectAll("svg")
+          .attr("width", w + "px")
+          .attr("height", h + "px")
+
+        d3.selectAll("g.context")
+          .attr("transform", "translate(" + rx + "," + ry + ")");
+
+        dx = Math.max(dx, minSize);
+
+        d3.selectAll("path.arc")
+          .transition()
+          .duration(500)
+          .attr("d", d3.svg.arc().outerRadius(dx - 120).innerRadius(0).startAngle(0).endAngle(2 * Math.PI));
+
+        if(totalData)
+          updateGraph(totalData, filterValue, dx);
+      });
+
+    function mouse(e) {
+      return [e.pageX - rx, e.pageY - ry];
+    }
+
+    function mousedown() {
+      m0 = mouse(d3.event);
+      d3.event.preventDefault();
+    }
+
+    function mousemove() {
+      if (m0) {
+        var m1 = mouse(d3.event),
+            dm = Math.atan2(cross(m0, m1), dot(m0, m1)) * 180 / Math.PI;
+        div.style("-webkit-transform", "rotateZ(" + dm + "deg)"); 
+         //translateY(" + (rx - ry) + "px) // translateY(" + (ry - rx) + "px)
+      }
+    }
+
+    function mouseup() {
+      if (m0) {
+        var m1 = mouse(d3.event),
+            dm = Math.atan2(cross(m0, m1), dot(m0, m1)) * 180 / Math.PI;
+
+        rotate += dm;
+        if (rotate > 360) rotate -= 360;
+        else if (rotate < 0) rotate += 360;
+        m0 = null;
+
+        div.style("-webkit-transform", null);
+
+        svg
+            .attr("transform", "translate(" + rx + "," + ry + ")rotate(" + rotate + ")")
+          .selectAll("g.node text")
+            .attr("dx", function(d) { return (d.x + rotate) % 360 < 180 ? 8 : -8; })
+            .attr("text-anchor", function(d) { return (d.x + rotate) % 360 < 180 ? "start" : "end"; })
+            .attr("transform", function(d) { return (d.x + rotate) % 360 < 180 ? null : "rotate(180)"; });
+      }
+    }
+
+    function mouseclick(d) {
+      d3.select(this)
+        .classed("node-hide", function() {
+          return !d3.select(this).classed("node-hide");
+        })
+
+      svg.selectAll("path.link.target-" + d.key)
+          .classed("link-hide", function() {
+            var fromNode = d3.select("g#node-" + d3.select(this).attr("node-from"));
+            var toNode = d3.select("g#node-" + d3.select(this).attr("node-to"));
+
+            return fromNode.classed("node-hide") || toNode.classed("node-hide");
+          })
+
+      svg.selectAll("path.link.source-" + d.key)
+          .classed("link-hide", function() {
+            var fromid = d3.select(this).attr("node-from");
+            var toid = d3.select(this).attr("node-to");
+
+            var fromNode = d3.select("g#node-" + fromid);
+            var toNode = d3.select("g#node-" + toid);
+
+            return fromNode.classed("node-hide") || toNode.classed("node-hide");
+
+          })
+    }
+
+    function mouseover(d) {
+      tip.show(d);
+
+      svg.selectAll("path.link.target-" + d.key)
+          .classed("target", true)
+          .each(updateNodes("source", true));
+
+      svg.selectAll("path.link.source-" + d.key)
+          .classed("source", true)
+          .each(updateNodes("target", true));
+    }
+
+    function mouseout(d) {
+      tip.hide(d);
+
+      svg.selectAll("path.link.source-" + d.key)
+          .classed("source", false)
+          .each(updateNodes("target", false));
+
+      svg.selectAll("path.link.target-" + d.key)
+          .classed("target", false)
+          .each(updateNodes("source", false));
+    }
+
+    function updateNodes(name, value) {
+      return function(d) {
+        if (value) this.parentNode.appendChild(this);
+        svg.select("#node-" + d[name].key).classed(d[name].key, value);
+      };
+    }
+
+    function cross(a, b) {
+      return a[0] * b[1] - a[1] * b[0];
+    }
+
+    function dot(a, b) {
+      return a[0] * b[0] + a[1] * b[1];
+    }
+
+    refresh();
+    setInterval(refresh, 2000);
+
+    </script>
+  </body>
+</html>
