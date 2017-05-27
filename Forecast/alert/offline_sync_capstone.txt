@@ -1,0 +1,19 @@
+
+
+sync for offline
+ - backup sql db to .sql file
+  mysqldump -uadmin -pSba5rtb! alert > /var/www/html/alert/alertdb.sql
+
+ - archive entire directory structure from /var/www/html/alert, plus the SQL file, to ui.zip
+  zip -r /var/www/html/bak/ui10312015.zip /var/www/html/alert
+ 
+ - scp zips to laptop
+  pscp -pw pmbf812ciln! vd745@vd745c7.stern.nyu.edu:/var/www/html/bak/ui10312015.zip C:\dst\tmp
+  
+ - extract to vagrant path on local HD
+  7z e c:\dst\tmp\ui10312015.zip -oc:\dst\alert
+  
+ - load the data
+ mysql -uroot -pwesvefaj alert < alertdb.sql
+
+ 

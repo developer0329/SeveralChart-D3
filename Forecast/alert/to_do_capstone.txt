@@ -1,0 +1,11 @@
+
+- store lastalertdate in forecast and filter out anypoints prior to last alert
+- build table of courses used in capstone
+- add date to points / forecast data set (use inix time in json file)
+- add user id to session var
+
+
+
+
+
+			 

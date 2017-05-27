@@ -1,0 +1,97 @@
+/* Bootstrap Overrides */
+
+.table>thead>tr>th, .table>tbody>tr>th, .table>tfoot>tr>th, .table>thead>tr>td, .table>tbody>tr>td, .table>tfoot>tr>td {
+	vertical-align: middle;
+}
+
+/* Helper Classes */
+
+.align-center  {
+	text-align: center;
+}
+
+.align-left  {
+	text-align: left;
+}
+
+.align-right  {
+	text-align: right;
+}
+
+.bump-20	{
+	margin-top: 20px;
+}
+
+.dimmed	{
+	color: #ddd;
+}
+
+.padding-10  {
+	padding: 10px;
+}
+
+.white-text  {
+	color: #fff;
+}
+
+.label-player8 {
+	background-color: #e469bf;
+	color: #fff;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: black;
+	shape-rendering: crispEdges;
+}
+
+.axis text {
+	font-size: 10px;
+	font-family: sans-serif;
+}
+
+.area {
+  fill: steelblue;
+  opacity: 0.1;
+}
+
+.text-label {
+	font-size: 10px;
+	font-family: sans-serif;
+}
+
+table {
+	border-collapse: collapse;
+    border: 2px black solid;
+    font: 12px sans-serif;
+}    
+td, th {
+	border: 1px black solid;
+	padding: 5px;
+}
+th {
+	font-weight: bold;
+}
+.fixed::before {
+    content: "";
+}
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}

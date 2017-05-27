@@ -1,0 +1,179 @@
+/* Remove the navbar's default margin-bottom and rounded borders */ 
+    .navbar {
+      margin-bottom: 0;
+      border-radius: 0;
+    }
+    
+    /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+    .row.content {height: 90%;}
+    
+    /* Set gray background color and 100% height */
+    .sidenav {
+      padding-top: 20px;
+      background-color: #ffffff;
+      height: 100%;
+    }
+
+	.navbar {
+	background-color: #ddd;
+	}
+
+	.card {
+	margin: 40px auto 0px auto;
+	width: 40%;
+	background-color: #f1f1f1;
+	padding: 40px;
+	}
+
+	.content_forecast {
+	margin: 10px auto 0px auto;
+	width: 100%;
+	background-color: #f1f1f1;
+	padding: 20px;
+	}
+
+	h3 {
+	margin: 0;
+	}
+
+	table {
+	background-color: #ffffff;
+	margin: auto;
+	margin-top: 10px;
+	}
+
+	th {
+	color: #1199ff;
+	}
+
+	th.tablesorter-header { 
+    background-image: url("../images/bg.gif"); 
+    cursor: pointer; 
+    font-weight: bold; 
+    background-repeat: no-repeat; 
+    background-position: right; 
+    padding-left: 20px; 
+    border-right: 1px solid #dad9c7; 
+    margin-left: -1px; 
+	} 
+	
+	th.tablesorter-headerAsc {
+    background-image: url(../images/asc.gif);
+    background-color: #3399FF; 
+    color: #ffffff;
+	}
+	
+	th.tablesorter-headerDesc {
+    background-image: url(../images/desc.gif);
+    background-color: #3399FF; 
+    color: #ffffff;
+	}
+
+	.axis path,
+	.axis line {
+	fill: none;
+	stroke: black;
+	shape-rendering: crispEdges;
+	}
+	
+	.axis text {
+	font-size: 10px;
+	font-family: sans-serif;
+	}
+	
+	.area {
+	fill: steelblue;
+	opacity: 0.1;
+	}
+
+	.btn-file {
+    position: relative;
+    overflow: hidden;
+	}
+	.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+	}
+
+	/* Helper Classes */
+
+.align-center  {
+	text-align: center;
+}
+
+.align-left  {
+	text-align: left;
+}
+
+.align-right  {
+	text-align: right;
+}
+
+.bump-20	{
+	margin-top: 20px;
+}
+
+.dimmed	{
+	color: #ddd;
+}
+
+.padding-10  {
+	padding: 10px;
+}
+
+.white-text  {
+	color: #fff;
+}
+
+.label-player8 {
+	background-color: #e469bf;
+	color: #fff;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: black;
+	shape-rendering: crispEdges;
+}
+
+.axis text {
+	font-size: 10px;
+	font-family: sans-serif;
+}
+
+.area {
+  fill: steelblue;
+  opacity: 0.1;
+}
+
+text.text-label {
+	font-size: 12px;
+	font-family: sans-serif;
+}
+
+/*******************************/
+.panel-heading{
+	text-align:center;
+}
+/*******************************/
+
+/* On small screens, set height to 'auto' for sidenav and grid */
+@media screen and (max-width: 767px) {
+  .sidenav {
+	height: auto;
+	padding: 15px;
+  }
+  .row.content {height:auto;} 
+}
