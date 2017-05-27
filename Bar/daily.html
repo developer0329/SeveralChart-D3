@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Product - Months</title>
+		<link href="bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css">
+		<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+	  
+		<style>
+
+			.bar {
+			  fill: steelblue;
+			}
+
+			.bar:hover {
+			  fill: brown;
+			}
+
+			.axis {
+			  font: 10px sans-serif;
+			}
+
+			.axis path,
+			.axis line {
+			  fill: none;
+			  stroke: #000;
+			  shape-rendering: crispEdges;
+			}
+			.tooltip{
+				opacity:1;
+			}
+
+		</style>
+
+  
+		<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+		<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+		<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+		<script src="//d3js.org/d3.v3.min.js"></script>
+		<script src="//d3js.org/d3.v3.min.js"></script>
+
+	</head>
+	<body>
+		<div style="padding:50px;">
+			<div class = "row">
+				<div class="col-md-3">
+					<p>Date: <input type="text" id="datepicker"></p>
+				</div>
+				
+				<div class="col-md-9">
+					<p id="alert"> </p>
+					<div id="chart"></div>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script>
+		var dateObject;		
+		$( "#datepicker" ).datepicker(
+			{
+				changeMonth: true,
+				changeYear: true,
+				dateFormat: "yy-mm-dd",
+				onSelect: function (date, inst) {
+					var date = $("#datepicker").val();
+					if ($.trim(date) != "") {
+						dateObject = new Date(date);
+						$("#datepicker").val($.datepicker.formatDate('yy-mm-dd', dateObject));
+					}
+					
+					update();
+				}
+			}
+		)
+		.datepicker('setDate', 'today');
+		
+		var margin = {top: 20, right: 20, bottom: 30, left: 40},
+			width = 860 - margin.left - margin.right,
+			height = 400 - margin.top - margin.bottom;
+		
+		var parseDate = d3.time.format("%d/%m/%Y").parse;
+		
+		var x = d3.scale.ordinal()
+			.rangeRoundBands([0, width], .1);
+
+		var y = d3.scale.linear()
+			.range([height, 0]);
+
+		var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom");
+
+		var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient("left")
+			.ticks(10, "");
+
+		var svg = d3.select("#chart").append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		
+		Array.prototype.sum = function (prop) {
+			var total = 0;
+			var count = 0;
+			for ( var i = 0, _len = this.length; i < _len; i++ ) {
+				total += +this[i][prop];
+				if(+this[i][prop] > 0)
+				{
+					count++;
+				}
+			}
+			return [total, count];
+		};
+		
+		function update() {
+			
+			d3.csv("all.csv", type, function(error, data) {
+				if (error) throw error;
+				
+				svg.selectAll('*').remove();
+				
+				var date = $("#datepicker").val();
+				dateObject = new Date(date);
+				
+				var temp = [];
+				for(var i = 0; i < data.length; i++)
+				{
+					var d = parseDate(data[i].DATE);				
+
+					if(dateObject.getFullYear() == d.getFullYear() && dateObject.getMonth() == d.getMonth()  && dateObject.getDay() == d.getDay())
+					{
+						delete data[i].DATE;
+						delete data[i].value;
+						temp.push(data[i]);
+					}
+				}
+				
+				if(temp.length == 0)
+				{
+					$("#alert")[0].innerHTML = "Data is Empty!";
+					return;
+				}
+				$("#alert")[0].innerHTML = "";
+				var keys = Object.keys(temp[0]);
+				
+				var real_data = [];
+				for(var i = 0; i < keys.length; i++)
+				{
+					real_data.push({product:keys[i], value: temp.sum(keys[i])[0], count: temp.sum(keys[i])[1]});
+				}
+				console.log(real_data);
+				x.domain(real_data.map(function(d) { return d.product; }));
+				y.domain([0, d3.max(real_data, function(d) { return d.value; })]);
+
+				svg.append("g")
+					.attr("class", "x axis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(xAxis);
+
+				svg.append("g")
+					.attr("class", "y axis")
+					.call(yAxis)
+					.append("text")
+					.attr("transform", "rotate(-90)")
+					.attr("y", -30)
+					.attr("dy", ".71em")
+					.style("text-anchor", "end")
+					.text("Value");
+
+				svg.selectAll(".bar")
+					.data(real_data)
+					.enter().append("rect")
+					.attr("class", "bar")
+					.attr("x", function(d) { return x(d.product); })
+					.attr("width", x.rangeBand())
+					.attr("y", function(d) { return y(d.value); })
+					.attr("height", function(d) { return height - y(d.value); })
+					.on("mouseover", function() { tooltip.style("display", null); })
+					.on("mouseout", function() { tooltip.style("display", "none"); })
+					.on("mousemove", function(d) {
+						var xPosition = d3.mouse(this)[0] - 15;
+						var yPosition = d3.mouse(this)[1] - 25;
+						tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+						tooltip.select("text").text("Value: " + d.value);
+					});
+				
+				svg.select(".x").selectAll(".tick")
+					.data(real_data)
+					.on("mouseover", function() {
+						tooltip.style("display", null);
+					})
+					.on("mouseout", function() { tooltip.style("display", "none"); })
+					.on("mousemove", function(d) {
+						var xPosition = d3.mouse(this.parentNode.parentNode)[0];
+						console.log(xPosition);
+						var yPosition = height - 25;
+						tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+						tooltip.select("text").text("Total Number: " + d.count);
+					});
+				// Prep the tooltip bits, initial display is hidden
+				var tooltip = svg.append("g")
+					.attr("class", "tooltip")
+					.style("display", "none");
+					
+				tooltip.append("rect")
+					.attr("width", 30)
+					.attr("height", 20)
+					.attr("fill", "white")
+					.style("opacity", 0);
+
+				tooltip.append("text")
+					.attr("x", 15)
+					.attr("dy", "1.2em")
+					.style("text-anchor", "middle")
+					.attr("font-size", "12px")
+					.attr("font-weight", "bold");
+			});
+		}
+		
+		function type(d) {
+			d.value = +d.value;
+			return d;
+		}
+		update();
+	</script>
+</html>
