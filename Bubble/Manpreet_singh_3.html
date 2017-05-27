@@ -1,0 +1,122 @@
+<html>
+	<head>
+	<style>
+		#title{
+			background-color:black;
+			color:white;
+			padding:10px;
+		}
+		h1{
+			margin:0px;
+		}
+		#countries{
+			list-style:none;
+			padding:10px;
+			float:left;
+		}
+		circle{
+			opacity: 0.9;
+		}
+		.domain{
+			fill:none;
+			stroke:#000;			
+		}
+		.tick{
+			font-size:12
+		}
+		.tick line{
+			stroke:#ccc;
+		}
+    </style>
+
+	<script src="//d3js.org/d3.v3.min.js"></script>
+	</head>
+	<body>
+		<div id="title"><h1>Gapminder - Wealth and Health of Nations</h1></div>
+		<div>
+			<ul id="countries"></ul>
+			<svg id="chart"></svg>
+		</div>
+		
+		<script>
+			var year = 2008;
+			
+			var w = 500, h = 400;
+			var margin = { top :20, left:20, right:20, bottom:20 };
+			var innerHeight = h - margin.top - margin.bottom;
+			var innerWidth = w - margin.left - margin.right;
+			
+			var list = d3.select("#countries");
+			var svg = d3.select("#chart");
+			var x_Axis = svg.append("g")
+				.attr("transform", "translate(" 
+					+ margin.left 
+					+ ","
+					+ (innerHeight + margin.top) + ")");
+			var y_Axis = svg.append("g")
+				.attr("transform", "translate(" 
+					+ margin.left 
+					+ ","
+					+ margin.top + ")");
+			var circle = svg.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");			
+			
+			function drawGraph(data){
+				var filteredData = data.filter(function(d){
+					return d.income[year] && d.lifeExpectancy[year] && d.population[year]
+				});
+				
+				list.selectAll("li")
+					.data(filteredData)
+					.enter()
+					.append("li")
+					.attr("class", "listItem")
+					.text(function(d){ return d.name} );
+					
+				svg
+					.attr("width", w)
+					.attr("height", h);
+					
+				var xScale = d3.scale.linear()
+					.range([0, innerWidth])
+					.domain([-1000, d3.max(filteredData, function(d){ return d.income[year]})]);
+				
+				var yScale = d3.scale.linear()
+					.range([innerHeight, 0])
+					.domain(d3.extent(filteredData, function(d){return d.lifeExpectancy[year]}));
+				
+				var sScale = d3.scale.linear()
+					.range([20, 1000])
+					.domain(d3.extent(filteredData, function(d){return d.population[year]}));
+					
+				var cScale = d3.scale.category10();
+				
+				var xAxis = d3.svg.axis()
+					.tickSize(-360)
+					.scale(xScale)
+					.orient("bottom");
+				var yAxis = d3.svg.axis()
+					.tickSize(-460)
+					.scale(yScale)
+					.orient("left")
+									
+				x_Axis.call(xAxis);
+				y_Axis.call(yAxis);
+				
+				circle.selectAll("circle")
+					.data(filteredData)
+					.enter()
+					.append("circle")
+						.attr("r", function(d){ return Math.sqrt(sScale(d.population[year])/Math.PI)})
+						.attr("cx", function(d){ return xScale(d.income[year])})
+						.attr("cy", function(d){ return yScale(d.lifeExpectancy[year])})
+						.attr("fill", function(d){ return cScale(d.region)})
+			}
+			
+			d3.json("newData.json", function(json) {
+				drawGraph(json);
+			});
+
+		</script>
+	</body>
+</html>
