@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<link type="text/css" rel="stylesheet" href="style.css"/>
+		<style type="text/css">
+
+			circle.node {
+				cursor: pointer;
+				stroke: #000;
+				stroke-width: .5px;
+			}
+
+			line.link {
+				fill: none;
+				stroke: #9ecae1;
+				stroke-width: 1.5px;
+			}
+			
+			.node text {
+				pointer-events: none;
+				font: 10px sans-serif;
+			}
+
+		</style>
+		<script type="text/javascript" src="js/d3.v3.min.js"></script>
+		<script src="js/angular.min.js"></script>
+	</head>
+	<body>
+		<h2>Custom D3 Graph with Angular directive</h2>
+		
+		<div ng-app='myApp' ng-controller="myController">
+			<svg force-chart></svg>
+		</div>
+		
+		<script type="text/javascript">
+			var app = angular.module('myApp', []);
+			
+			app.controller('myController', ['$scope', '$http', function ($scope, $http) {
+				//setting the data in the scope
+				$scope.data = undefined;
+				var url = "sample.json";//"http://192.168.1.100/angularjs/jsondata.php";
+				
+				$http(
+				{
+					url: url,
+					method: "GET",
+				})
+				.then(function (response) {
+					$scope.data = response.data;
+				});
+			}]);
+			app.directive('forceChart', function () {
+				return {
+					restrict: 'EA',
+
+					link: function (scope, elem, attrs) {
+						//this will watch the scope data
+						scope.$watch( "data", 
+							function handleChange(newValue, oldValue) {
+								if (!newValue) {
+									return;
+								}
+				   
+								var width = 1280, height = 500, root;
+								var update_count = 0;
+								var fill = d3.scale.linear().domain([1, 2, 3, 4, 5])
+											.range(["#FFF2E7", "#D0CABF", "#71cc89", "#0c8ad4", "#859cac"]);
+								
+								var force = d3.layout.force()
+									.on("tick", tick)
+									.friction(0.1)
+									.linkStrength(0.7)
+									.charge(function(d) { return d._children ? -d.size * 50 : -5000; })
+									.gravity(.05)
+									.linkDistance(function(d) { return d.target._children ? 150 : 100; })
+									.size([width, height - 160]);
+
+								var svg = d3.select("svg")
+									.attr("width", width)
+									.attr("height", height);
+								var link = svg.selectAll(".link"),
+									node = svg.selectAll(".node");
+								var nodes;
+								// Define the div for the tooltip
+								var div = d3.select("body").append("div")	
+									.attr("class", "tooltip")				
+									.style("opacity", 0);
+	
+								root = newValue;
+								root.fixed = true;
+								root.x = 100;
+								root.y = height / 2;
+								
+								update();
+								initial_view();
+								function update() {
+									nodes = flatten(root);									
+									var	links = d3.layout.tree().links(nodes);
+									
+
+									// Restart the force layout.
+									force
+										.nodes(nodes)
+										.links(links)
+										.start();
+
+									// Update the links…
+									link = svg.selectAll("line.link")
+										.data(links, function(d) { return d.target.id; });
+									link.exit().remove();
+									// Enter any new links.
+									link.enter().insert("line", ".node")
+										.attr("class", "link");
+									
+			
+									// Update the nodes…
+									node = svg.selectAll(".node")
+										.data(nodes, function(d) { return d.id; });
+									node.exit().remove();
+									// Enter any new nodes.
+									var nodeEnter = node.enter().append("g")
+										.attr("class", "node")
+										.on("click", click)
+										.call(force.drag);
+										
+									nodeEnter.append("foreignObject")
+										.attr("class", "simpleDiv")
+										.attr("width", function (d) { 
+											if(d.type == "Person")
+											{
+												if(d.size * 1.5 > 90)
+													return 90;
+												else
+													return d.size * 1.5;
+											}
+											else
+											{
+												return d.size; 
+											}
+										})
+										.attr("height", function (d) {
+											if(d.type == "Person")
+											{
+												if(d.size * 1.5 > 90)
+													return 90;
+												else
+													return d.size * 1.5;
+											}
+											else
+											{
+												return d.size;
+											}
+										})
+										.attr("x", function (d) { return -d.size/2; })
+										.attr("y", function (d) { return -d.size/2; })
+										.attr("overflow", "visible")
+										.append("xhtml:div").attr("class", "mainDiv")
+										.html(function (d) {
+											var htmlString = "";
+											var userImage = "img/person.jpg";
+											if (d.type != 'Person') {
+												var padding = d.size/2 - 10;
+												
+												htmlString += "<div class='content' style='color: black;"
+															+ " padding-top:" + padding + "px;"
+															+ "'>" + d.name + "</div>";
+												htmlString += "<div style='clear:both;'></div>";
+											}
+											return htmlString;
+										})
+										.style("background", function(d) { 
+											if(d.type == "Syndicator") return fill(5);
+											if(d.type == "Deal") return fill(4);
+											if(d.type == "Company") return fill(3);
+											if(d.type == "Person") return "url('img/person.jpg')";
+										})
+										.style("background-size", "100% 100%")
+										.style("background-repeat", "no-repeat");
+								}
+
+								function tick() {
+									link.attr("x1", function(d) { return d.source.x; })
+										.attr("y1", function(d) { return d.source.y; })
+										.attr("x2", function(d) { return d.target.x; })
+										.attr("y2", function(d) { return d.target.y; });
+
+									node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+								}
+
+								function color(d) {
+									return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
+								}
+
+								// Toggle children on click.
+								var details = false;
+								function click(d) {
+									if (d3.event.defaultPrevented) return;
+									if(d.type == "Syndicator") return;
+									
+									if(d.type == "Person")
+									{
+										if( details == false)
+										{
+											details = true;
+											div.transition()		
+												.duration(200)		
+												.style("opacity", .9)
+												.style("background", fill(1));		
+											div.html(
+												"Name: " + d.name + "<br/>" + 
+												"Title: " + d.title + "<br/>" + 
+												"E-mail: " + d.email + "<br/>" + 
+												"Phone: " + d.phone + "<br/>" + 
+												"Profile: <a href='" + d.profile + "'>" + d.profile + "</a><br/>" )	
+												.style("left", d.x + d.size + "px")		
+												.style("top", d.y + "px");	
+										}
+										else
+										{
+											div.transition()		
+												.duration(500)		
+												.style("opacity", 0);
+											details = false;
+										}
+									}
+									else
+									{
+										if (d.children) {
+											d._children = d.children;
+											d.children = null;
+										} else {
+											d.children = d._children;
+											d._children = null;
+										}
+										if( details == true)
+										{
+											div.transition()		
+												.duration(500)		
+												.style("opacity", 0);
+											details = false;
+										}
+									}
+									update();
+								}
+								
+								function initial_view()
+								{
+									if(update_count == 0)
+									{
+										nodes.forEach(function(d) {
+											if(d.type != "Syndicator"){
+												d._children = d.children;
+												d.children = null;
+											}										
+										});
+									}								
+									
+									update_count++;
+									update();
+								}
+
+								// Returns a list of all nodes under the root.
+								function flatten(root) {
+									var nodes = [], i = 0;
+
+									function recurse(node) {
+										if (node.children) 
+										  node.children.forEach(recurse);
+										if (!node.id) 
+										  node.id = ++i;
+										nodes.push(node);
+									}
+									 
+									recurse(root);
+									return nodes;
+								}
+
+							}
+						);
+
+					}
+				};
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,309 @@
+{
+	"name": "Syndicator A",
+	"type": "Syndicator",
+	"size": 100,
+	"children": [{
+		"name": "Deal ABC",
+		"type": "Deal",
+		"size": 50,
+		"children": [{
+			"name": "Company A",
+			"type": "Company",
+			"size": 30,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}, {
+			"name": "Company B",
+			"type": "Company",
+			"size": 60,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}, {
+			"name": "Company C",
+			"type": "Company",
+			"size": 90,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}]
+	}, {
+		"name": "Deal DEF",
+		"type": "Deal",
+		"size": 70,
+		"children": [{
+			"name": "Company A",
+			"type": "Company",
+			"size": 30,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}, {
+			"name": "Company B",
+			"type": "Company",
+			"size": 60,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}, {
+			"name": "Company C",
+			"type": "Company",
+			"size": 90,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}]
+	}, {
+		"name": "Deal GHI",
+		"type": "Deal",
+		"size": 90,
+		"children": [{
+			"name": "Company A",
+			"type": "Company",
+			"size": 30,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 90,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}, {
+			"name": "Company B",
+			"type": "Company",
+			"size": 65,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 30,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 50,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 70,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}, {
+			"name": "Company C",
+			"type": "Company",
+			"size": 85,
+			"children": [{
+				"name": "Person A",
+				"type": "Person",
+				"size": 20,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person B",
+				"type": "Person",
+				"size": 40,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}, {
+				"name": "Person C",
+				"type": "Person",
+				"size": 60,
+				"title": "President",
+				"email": "person@person.com",
+				"phone": "888-8888-8888",
+				"image": "http://url.to.image/image.jpg",
+				"profile": "http://url.to.profile/profile.html"
+			}]
+		}]
+	}]
+}

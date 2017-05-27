@@ -1,0 +1,164 @@
+body {
+  height: 640px;
+  margin: 80px 160px 80px 160px;
+  overflow: hidden;
+  position: relative;
+  width: 960px;
+}
+
+a:link, a:visited {
+  color: #777;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #666;
+}
+
+blockquote {
+  margin: 0;
+}
+
+blockquote:before {
+  content: "â€œ";
+  position: absolute;
+  left: -.4em;
+}
+
+blockquote:after {
+  content: "â€";
+  position: absolute;
+}
+
+body > ul {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: 64px;
+}
+
+h1, h2, h3 {
+  font-weight: inherit;
+  margin: 0;
+}
+
+h2, h3 {
+  text-align: right;
+  font-size: inherit;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
+h2 {
+  font-size: 24px;
+  position: absolute;
+}
+
+h3 {
+  bottom: -20px;
+  font-size: 18px;
+}
+
+.invert {
+  background: #1f1f1f;
+  color: #dcdccc;
+}
+
+.invert h2, .invert h3 {
+  color: #7f9f7f;
+}
+
+.string, .regexp {
+  color: #f39;
+}
+
+.keyword {
+  color: #00c;
+}
+
+.comment {
+  color: #777;
+  font-style: oblique;
+}
+
+.number {
+  color: #369;
+}
+
+.class, .special {
+  color: #1181B8;
+}
+
+body > svg {
+  position: absolute;
+  top: -80px;
+  left: -160px;
+}
+
+div.tooltip {	
+    position: absolute;			
+    text-align: left;			
+    width: auto;					
+    height: auto;					
+    padding: 5px;				
+    font: 12px Arial;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: auto;			
+}
+
+
+/***********************************/
+circle.node {
+    cursor: pointer;
+    stroke: #3182bd;
+    stroke-width: 1.5px;
+}
+path.link {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.5px;
+}
+.simpleDiv {
+    position: absolute;
+    overflow: visible;
+}
+.simpleDiv .mainDiv {
+    overflow: visible;
+    width: 100%;	
+    height: 100%;
+	border-radius: 50%;
+    border: 1px solid;
+	background-size: 100% 100%;
+    background-repeat: no-repeat;
+	pointer-events: auto;
+	cursor:pointer;
+}
+.simpleDiv .mainDiv .userImage {
+    width: 100%;
+    height: 1;
+    border: 2px solid;
+    border-radius:30px;
+    overflow: hidden;
+}
+.simpleDiv .mainDiv .docIcon {
+    width: 36px;
+}
+.simpleDiv .mainDiv .content {
+	font-family: Arial;
+	font-size: 0.9em;
+	text-align: center;
+	white-space: nowrap;
+	cursor:pointer;
+	pointer-events: auto;
+}
+#hiddenText {
+    visibility: hidden;
+    padding: 0;
+}
+
+/***********************************/
