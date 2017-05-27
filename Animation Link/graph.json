@@ -1,0 +1,41 @@
+{"nodes":[
+	{"name" : "L1", "group" : 2 },
+	{"name" : "L2", "group" : 2 },
+	{"name" : "L3", "group" : 2 },
+	{"name" : "L4", "group" : 2 },
+	{"name" : "S1", "group" : 1 },
+	{"name" : "S2", "group" : 1 } 
+       ],
+     
+ "links":[{"source":0,"target":4,"value":8},
+          {"source":4,"target":1,"value":8},
+          {"source":1,"target":5,"value":8},
+          {"source":5,"target":3,"value":8}
+         ],
+
+     "constraints":[
+	  {"type":"alignment",
+	   "axis":"x",
+	   "offsets":[
+	     {"node":"0", "offset":"0"},
+	     {"node":"1", "offset":"200"},
+	     {"node":"2", "offset":"400"},
+	     {"node":"3", "offset":"600"},
+	     {"node":"4", "offset":"250"},
+	     {"node":"5", "offset":"450"}
+	     
+	   ]},
+	  {"type":"alignment",
+	   "axis":"y",
+	   "offsets":[
+	     {"node":"0", "offset":"0"},
+	     {"node":"1", "offset":"0"},
+	     {"node":"2", "offset":"0"},
+	     {"node":"3", "offset":"0"},
+	     {"node":"4", "offset":"200"},
+	     {"node":"5", "offset":"200"}
+
+	   ]}
+      ]
+}
+
