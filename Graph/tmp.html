@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<meta charset="utf-8">	
+<style>
+
+body {
+  font-size: 10px;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link-hide {
+  stroke-opacity: 0;
+}
+
+.link-show {
+  stroke-opacity: .6;
+}
+
+.link {
+  stroke: #999;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:before {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:before {
+  margin: 0 0 10px 0;
+  top: 100%;
+  left: 0;
+}
+
+</style>
+<body>
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.7/d3-tip.js"></script> 
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+  <script>
+
+  /* filter config setting */
+  var config = { "filter": .96 , "freeze": false };
+  var gui = new dat.GUI();
+   
+  /* filter slider changing event handler */
+  var filterChanger = gui.add(config, "filter", 0.7, 1.0, 0.01);
+  filterChanger.onChange(function(value) {
+    filterValue = value;
+
+    // OK, update the graph
+    updateGraph();
+  });
+
+  var freezeChanger = gui.add(config, "freeze");
+  freezeChanger.onChange(function(value) {
+    freeze = value;
+  });
+
+  var totalData = [];           // entire data structure
+  var filterValue = 0.96;       // filter variable
+  var nodes = [];               // nodes array
+  var links = [];               // links array
+  var toggled = false;          // flag variable for toggling the diagram
+
+
+  var width = window.innerWidth,
+      height = window.innerHeight;
+
+  // link distance variable
+  var linkDistance = Math.min(width, height) / 2.0;
+
+  /* delay time for loading the updated table */
+  var delay = 1000;
+
+  /* color palette */
+  var color = d3.scale.category20();
+
+  /* line color for positive correlation value */
+  var positiveColor = "#00f";
+
+  /* line color for negative correlation value */
+  var negativeColor = "#f00";
+
+  /* variable for lastModified date */
+  var lastModifiedDate = 0, freeze = false;
+
+  /* creating force layout */
+  var force = d3.layout.force()
+      .charge(-120)
+      .linkDistance(linkDistance)
+      .size([width, height]);
+
+  // OK, create svg element as window size
+  var svg = d3.select("body").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+  // preparing tip, same as bundle diagram.
+  var tip = d3.tip()
+            .attr('class', 'd3-tip')
+            .offset([-10, 0])
+            .html(function (d) {
+                var content = "<span><center><strong>" + d.name + "</strong></center><br/>" + 
+                        "<table><tr><th>Node</th><th>Value</th></tr>";
+
+                for(var i = 0, iLen = d.fields.length; i < iLen; i++) {
+                  content += "<tr><td>" + d.fields[i].name + "</td><td>" + d.fields[i].value + "</td></tr>";
+                }
+
+                content += "</table>";
+                return content;
+            });
+
+  svg.call(tip);
+
+  // Window resize event handler, redraw the diagram when the window resized.
+  d3.select(window)
+    .on("resize", function() {
+
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      // change the svg size
+      svg
+        .attr("width", width + "px")
+        .attr("height", height + "px")
+
+      // and calculate the new link distance
+      linkDistance = Math.min(width, height) / 2.0;
+
+      // ok, now set the new size and link distance
+      force
+        .linkDistance(linkDistance)
+        .size([width, height]);
+
+      // if data available, update graph
+      if(totalData)
+        updateGraph();
+    });
+
+  /* Prepare data for drawing the diagram */
+  function parseData(data, filter) {
+    // clear original nodes, links
+    nodes = [];
+    links = [];
+    toggled = false;
+
+    /// generating nodes from the csv data
+    for(var i = 0; i < data.length; i++)
+    {
+      var entityName = data[i][""].trim();
+      nodes.push(
+        { 
+          name: entityName, 
+          fields: [], 
+          group: i, 
+          id: i
+        }
+      );
+    }
+
+    /// preparing links data
+    for(var i = 0, iLen = nodes.length; i < iLen; i++)
+    {
+      for(var j = i + 1, jLen = nodes.length; j < jLen; j++)
+      {
+        var corrValue = parseFloat(data[i][ nodes[j].name ]);
+
+        // check the correlation value and if it is below filter, then ignore it.
+        if(Math.abs(corrValue) < filter) continue;
+
+        // add node to fields member, in order to show tip table
+        nodes[i].fields.push({
+          id: j,
+          name: nodes[j].name,
+          value: corrValue
+        });
+
+        nodes[j].fields.push({
+          id: i,
+          name: nodes[i].name,
+          value: corrValue
+        });
+
+        // ok, add link to links array
+        links.push(
+          {
+            source: i,
+            target: j,
+            value: corrValue
+          }
+        );
+      }
+    }
+  }
+
+  /* load data from the table.csv file and draw the diagram */
+  function loadData() {
+    d3.csv("table.csv?" + $.now(), function(data) {
+      //initGraph();
+	  totalData = data;
+      updateGraph();
+    });
+  }
+
+  function initGraph(){
+	svg.selectAll('*').remove();
+  }
+  /** refresh function
+   *  when the update.csv file is modified, then load new updated data.
+   */
+  function refresh() {
+    if(freeze) {
+      return;
+    }
+
+    $.getJSON( "update.php?" + $.now(), function(data) {
+      /* data = {"lastModifiedDate": 15345634323 } format */
+
+      if(lastModifiedDate < data.lastModifiedDate) {
+        lastModifiedDate = data.lastModifiedDate;
+
+        // load the new data after delay
+        //setTimeout(loadData, delay);
+		loadData();
+      }
+    })
+  }
+
+  /* Show connected links to the specified node */
+  function showConnectedLinks(node) {
+    // first, find out "level-1" links according to this node
+    sourceLinks = _.filter(links, function(link) { return link.source.id == node.id || link.target.id == node.id; });
+
+    // check every link connected to the node
+    _.each(sourceLinks, function(link){
+      // is this link visible?
+      isAlreadyVisible = d3.select('#link-' + link.source.id + '-' + link.target.id).classed('link-show');
+
+      if(isAlreadyVisible) {
+        // yes, visible then return; this link is already iterated
+        return;
+      } else {
+        // no, then show this node.
+        d3.select('#link-' + link.source.id + '-' + link.target.id)
+          .classed('link-hide', false)
+          .classed('link-show', true);
+
+        // recursively show the links according to the nodes of this link
+        showConnectedLinks(link.source);
+        showConnectedLinks(link.target);
+      }
+    });
+  }
+
+  /* Update the diagram */
+  function updateGraph() {
+    // prepare data
+    parseData(totalData, filterValue);
+
+    // calculate the nodes coordinates
+    force
+        .nodes(nodes)
+        .links(links)
+        .start();
+
+    var k = 0;
+    while ((force.alpha() > 1e-2) && (k < 50)) {
+        force.tick(),
+        k = k + 1;
+    }
+
+    // add links first
+    var link = svg.selectAll(".link")
+        .data(links);
+
+    link.enter().insert("line");
+
+    link
+        .transition()
+        .attr("class", "link link-show")
+        .attr("id", function(d) { return 'link-' + d.source.id + '-' + d.target.id; })
+        .style("stroke", function(d) { return (d.value < 0) ? negativeColor : positiveColor})
+        .style("stroke-width", function(d) { return Math.floor(Math.sqrt(Math.abs(d.value * 5))); });
+    
+    // remove original links
+    link.exit().remove();
+
+    // add nodes
+    var node = svg.selectAll(".node")
+        .data(nodes);
+        
+    node.enter().insert("circle");
+
+    // setup the node
+    node.attr("class", "node")
+        .attr("r", 10)
+        .style("fill", function(d) { return color(d.group); })
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
+        .on('dblclick', function(d){
+          /* double click handler */
+
+          // check the state
+          toggled = !toggled;
+
+          console.log('d.show' + d.show);
+          if(toggled) {
+            // first hide all the links 
+            _.each(links, function(link) {
+              d3.select('#link-' + link.source.id + '-' + link.target.id)
+                .classed('link-hide', true)
+                .classed('link-show', false);
+            });
+
+            // and then show the links connected to this node
+            showConnectedLinks(d);
+          } else {
+            // show all the links again
+            _.each(links, function(link) {
+              d3.select('#link-' + link.source.id + '-' + link.target.id)
+                .classed('link-hide', false)
+                .classed('link-show', true);
+            });
+          }
+        })
+        .call(force.drag);
+
+    // remove original nodes
+    node.exit().remove();
+    
+    // when mouse dragging, change the links position.
+    force.on("tick", function() {
+      link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+
+      // and change the node
+      node.attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; });
+
+    });  
+  }
+
+  refresh();
+  setInterval(refresh, 2000);
+
+  </script>
+</body>
