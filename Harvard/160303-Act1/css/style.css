@@ -1,0 +1,14 @@
+.link {
+	stroke: black;/* link colour - use hex etc */
+}
+
+.node circle {
+  fill: #ccc;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+}
