@@ -1,0 +1,526 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>CS171 - HW 6</title>
+
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+	<!--
+
+		MALARIA
+			- Information
+			- Choropleth 
+			- Implementation of own sketch or tree visualization
+
+	-->
+
+	<!-- Load JS libraries -->
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/queue.min.js"></script>
+	<script src="js/topojson.js"></script>
+	<script src="js/d3.v3.min.js"></script>
+	
+	<!-- tooltip and legend js -->
+	<script src="js/tooltip.js"></script>
+	<script src="js/d3-legend.min.js"></script>
+	<script src="js/d3.tip.v0.6.3.js"></script>
+	<script src="js/colorbrewer.min.js"></script>
+	
+	<!-- Choropleth and second visualization -->
+	<script src="js/vis-choropleth.js"></script>
+	<script src="js/vis-second.js"></script>
+	
+	<script src="js/photo-gallery.js"></script>
+	
+	<nav id="header" class="navbar navbar-fixed-top">
+		<div id="header-container" class="container navbar-container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a id="brand" class="navbar-brand" href="#">Midterm Project - CS 171</a>
+			</div>
+			<div id="navbar" class="collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="#">Home</a></li>
+					<li><a href="#about">About</a></li>
+					<li><a href="#contact">Contact</a></li>
+				</ul>
+			</div><!-- /.nav-collapse -->
+		</div><!-- /.container -->
+	</nav><!-- /.navbar -->
+		
+	<div class="container">
+		<h1>WHO Global Malaria Programme</h1>
+		<ul class="row">
+            <li class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <img class="img-responsive" src="img/malaria1.png">
+            </li>
+            <li class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <img class="img-responsive" src="img/malaria2.jpg">
+            </li>
+            <li class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <img class="img-responsive" src="img/malaria3.jpg">
+            </li>
+			<li class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <img class="img-responsive" src="img/malaria7.jpg">
+            </li>
+            <li class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <img class="img-responsive" src="img/malaria5.jpg">
+            </li>
+            <li class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                <img class="img-responsive" src="img/malaria6.jpg">
+            </li>
+		</ul>
+		<div class="row">
+			<div class="col-lg-4">
+				<div id="primary">
+					<hr>
+					<div class="image_left">
+						<img src="img/malaria4.jpg" alt="Teacher explaining to schoolchildren about malaria and mosquitoes, Malawi" width="310" height="200">
+						<div class="image_credit" style="width:310px">WHO/S. Hollyman</div>
+					</div>
+
+					<p>
+						<span>In Malawi, children learn about malaria and mosquitoes in school classes. A teacher explains about mosquitoes and malaria.</span>
+					</p>
+					<hr>
+					<div class="image_left">
+						<img src="img/malaria9.jpg" alt="A woman hangs a mosquito net in the temporary dwelling, Cambodia" width="310" height="200">
+						<div class="image_credit" style="width:310px">WHO/S. Hollyman</div>
+					</div>
+					<p>
+						<span>A woman hangs a mosquito net in the temporary dwelling in the fields (champka) that she and her husband are clearing to farm, Cambodia.</span>
+					</p>
+					<hr>
+					<div class="image_left">
+						<img src="img/malaria5.jpg" alt="A fresh set of bed nets are distributed to residents, Patang, Cambodia " width="310" height="200">
+						<div class="image_credit" style="width:310px">WHO/S. Hollyman</div>
+					</div>
+					<p>
+						<span>Bednets have to be changed once every 3-5 years. Here a fresh supply of bednets is distributed to residents in Patang village, Cambodia.</span>
+					</p>
+					<hr>
+
+					<div class="image_left">
+						<img src="img/malaria6.jpg" alt="School children at malaria class, Malawi" width="310" height="200">
+						<div class="image_credit" style="width:310px">WHO/S. Hollyman</div>
+					</div>
+					<p>  		
+						<span>Education on malaria prevention can be taught in schools. School children participate in a class on malaria and how to protect themselves, Malawi.</span>
+					</p>
+					<hr>
+
+					<div class="image_left">
+						<img src="img/malaria8.jpg" alt="A woman putting a mosquito net, Tanzania" width="310" height="200">
+						<div class="image_credit" style="width:310px">WHO/S. Hollyman</div>
+					</div>
+
+					<p>
+						<span>A woman putting up a mosquito bednet, United Republic of Tanzania.</span>
+					</p>
+					<hr>
+
+					<div class="image_left">
+						<img src="img/malaria7.jpg" alt="Bednet, Tanzania" width="310" height="200">
+						<div class="image_credit" style="width:310px">WHO/S. Hollyman</div>
+					</div>
+
+					<p>
+						<span>A man and his mosquito bednet, United Republic of Tanzania.</span>
+					</p>
+				</div>
+			</div>
+			<div class="col-lg-8">
+				<div class="row"><h3>​Choropleth Map</h3></div>
+				<div id="choropleth-map" class="row">
+					<select id="attrSelect" onchange="selectAttribute()" style="padding:3px; margin-bottom:10px;">
+						<option value="malaria">Malaria Cases</option>
+						<option value="suspected">Suspected Malaria Cases</option>
+						<option value="population">UN Population</option>
+						<option value="risk">Risk</option>
+						<option value="highrisk">High Risk</option>
+					</select>
+				</div>
+				<div class="row"><h3>Implement a D3 tree visualization</h3></div>
+				<div id="tree-graph" class="row"></div>
+				
+			</div>
+			
+		</div>
+		
+	</div>
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">         
+				<div class="modal-body">                
+				</div>
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+	<script>
+		
+		var w = 800, h = 600;
+		
+		var attr_type = "malaria";
+		
+		var svg = d3.select('#choropleth-map').append('svg')
+			.attr("id", "map-svg")
+			.attr("width", w)
+			.attr("height", h)
+			.style("background-color", "rgb(188, 188, 189)");
+		var projection = d3.geo.mercator()
+			.scale(380)
+			.translate([ w / 2.4, h / 1.9 ]);
+		var path = d3.geo.path()
+			.projection(projection);
+		var colorScale = d3.scale.quantize()
+			.range(colorbrewer.OrRd[7]);
+			
+			
+		var countryByID = d3.map();
+		
+		function dataUpdate()
+		{
+			queue().defer(d3.json, "data/africa.topo.json")
+				.defer(d3.csv, "data/global-malaria-2015.csv", dataProcess)
+				.await(dataLoaded);
+			
+			function dataProcess(d)
+			{
+				d.Malaria_cases = +d.Malaria_cases;
+				d.Suspected_malaria_cases = +d.Suspected_malaria_cases;
+				d.UN_population = +d.UN_population;
+				d.At_high_risk = +d.At_high_risk;
+				d.At_risk = +d.At_risk;
+				
+				countryByID.set(d.Code, d);
+				return d;
+			}
+		}
+		
+		function getColor(d)
+		{
+			var dataRow = countryByID.get(d.properties.iso_a3);
+			if(dataRow)
+			{
+				return colorScale(dataRow.Malaria_cases);
+			}
+			else
+			{
+				return "#CCCCCC";
+			}
+		}
+		
+		function getTooltipContent(d)
+		{
+			var dataRow = countryByID.get(d.properties.iso_a3);
+			if (dataRow)
+			{
+				return 	"<strong>Country Name: </strong>" + dataRow.Country + "<br>"
+							+ "<strong>UN Population: </strong>" + dataRow.UN_population + "<br>"
+							+ "<strong>Risk: </strong>" + dataRow.At_risk + "%<br>"
+							+ "<strong>High Risk: </strong>" + dataRow.At_high_risk + "%<br>"
+							+ "<strong>Suspected Malaria Cases: </strong>" + dataRow.Suspected_malaria_cases + "<br>"
+							+ "<strong>Malaria Cases: </strong>" + dataRow.Malaria_cases ;
+			}
+			else 
+			{
+				return "<strong>" + d.properties.name + "</strong><br> No data";
+			}
+		}
+
+		
+		function dataLoaded(error, countries, illness)
+		{
+			if(attr_type == "malaria")
+			{
+				colorScale.domain(d3.extent(illness, function(d){ return d.Malaria_cases; }));
+			}
+			if(attr_type == "suspected")
+			{
+				colorScale.domain(d3.extent(illness, function(d){ return d.Suspected_malaria_cases; }));
+			}
+			if(attr_type == "population")
+			{
+				colorScale.domain(d3.extent(illness, function(d){ return d.UN_population; }));
+			}
+			if(attr_type == "risk")
+			{
+				colorScale.domain(d3.extent(illness, function(d){ return d.At_risk; }));
+			}
+			if(attr_type == "highrisk")
+			{
+				colorScale.domain(d3.extent(illness, function(d){ return d.At_high_risk; }));
+			}
+			
+			var world = topojson.feature(countries, countries.objects.collection).features;
+			
+			svg.selectAll('path.countries')
+				.data(world)
+				.enter()
+				.append('path')
+				.attr('class', 'countries')
+				.attr('d', path)
+				.attr('fill', function(d,i) { return getColor(d); })
+				.call(d3.helper.tooltip(
+					function(d, i){
+					  return getTooltipContent(d);
+					}
+				));
+				
+			var linear = colorScale;
+			
+			svg.append("g")
+				.attr("class", "legend")
+				.attr("transform", "translate(20,20)");
+
+			var legend = d3.legend.color()
+				.shapeWidth(30)
+				.orient('vertical')
+				.scale(linear);
+
+			svg.select(".legend")
+				.call(legend);
+		}
+		
+		function selectAttribute(){
+			attr_type = document.getElementById("attrSelect").value;
+			d3.selectAll("svg#map-svg>*").remove();
+			dataUpdate();
+		}
+		
+		dataUpdate();
+	</script>
+	
+	
+	<!-- Tree Graph -->
+	<script>
+		var treeData = [];
+		
+		var m = {top: 20, right: 120, bottom: 20, left: 120}, // Margin
+			tW = 800 - m.right - m.left,                       // Width
+			tH = 600 - m.top - m.bottom;						  // Height				
+	
+		var i = 0,	duration = 750, root;
+
+		var tree = d3.layout.tree().size([ tH, tW ]);
+
+		var diagonal = d3.svg.diagonal().projection(function(d) { return [d.y, d.x]; });
+
+		var tSvg = d3.select('#tree-graph').append("svg")
+			.attr("id", "tree-svg")
+			.attr("width", tW + m.right + m.left)
+			.attr("height", tH + m.top + m.bottom)
+			.append("g")
+			.attr("transform", "translate(" + m.left + "," + m.top + ")");
+			
+		queue().defer(d3.json, "data/malaria-parasites.json")
+				.await(treeDataLoaded);
+		
+		function treeDataLoaded(error, result)
+		{
+			treeData = result;
+			
+			root = treeData[0];
+			root.x0 = tH / 2;
+			root.y0 = 0;
+	  
+			update(root);
+		}
+		
+		d3.select(self.frameElement).style("height", "500px");
+
+		function update(source) {
+
+			// Compute Tree Layout.
+			var nodes = tree.nodes(root).reverse();
+			var links = tree.links(nodes);
+
+			// Normalize for Same Depth.
+			nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+			// Update Nodes
+			var node = tSvg.selectAll("g.node").data(
+					nodes,
+					function(d) {
+						return d.id || (d.id = ++i); 
+					}
+				);
+
+			// Enter Nodes at the Parent's Previous Pos
+			var nodeEnter = node.enter().append("g")
+				.attr("class", "node")
+				.attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+				.on("click", click);
+
+			nodeEnter.append("circle")
+				.attr("r", 1e-6)
+				.style("fill", function(d) { return d.children || d._children ? "#fff" : "#7D1A17"; });
+
+			nodeEnter.append("text")
+				.attr("x", function(d) { return d.children || d._children ? -13 : 13; })
+				.attr("dy", function(d) { return d.children || d._children ? "-1.5em" : ".35em"; })
+				.attr("text-anchor", function(d) { return "start"; })
+				.text(function(d) { return d.name; })
+				.style("fill-opacity", 1e-6);
+
+			// Transition nodes to their new position.
+			var nodeUpdate = node.transition()
+				.duration(duration)
+				.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+			nodeUpdate.select("circle")
+				.attr("r", 10);
+
+			nodeUpdate.select("text")
+				.style("fill-opacity", 1);
+
+			// Transition exiting nodes to the parent's new position.
+			var nodeExit = node.exit().transition()
+				.duration(duration)
+				.attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+				.remove();
+
+			nodeExit.select("circle")
+				.attr("r", 1e-6);
+
+			nodeExit.select("text")
+				.style("fill-opacity", 1e-6);
+
+			// Update Links
+			var link = tSvg.selectAll("path.link").data(links, function(d) { return d.target.id; });
+
+			// Enter any new links at the parent's previous position.
+			link.enter().insert("path", "g")
+				.attr("class", "link")
+				.attr("d", function(d) {
+					var point = {x: source.x0, y: source.y0};
+					return diagonal({source: point, target: point});
+				});
+			link.transition()
+				.duration(duration)
+				.attr("d", diagonal);
+			link.exit().transition()
+				.duration(duration)
+				.attr("d", function(d) {
+					var point = {x: source.x, y: source.y};
+					return diagonal({source: point, target: point});
+				})
+				.remove();
+
+			// Stash the old positions for transition.
+			nodes.forEach(function(d) {
+				d.x0 = d.x;
+				d.y0 = d.y;
+			});
+		}
+
+		// Toggle children on click.
+		function click(d) {
+			if (d.children)
+			{
+				d._children = d.children;
+				d.children = null;
+			}
+			else
+			{
+				d.children = d._children;
+				d._children = null;
+			}
+			update(d);
+		}
+</script>
+</body>
+<script>
+$(document).ready(function(){
+
+/**
+ * This object controls the nav bar. Implement the add and remove
+ * action over the elements of the nav bar that we want to change.
+ *
+ * @type {{flagAdd: boolean, elements: string[], add: Function, remove: Function}}
+ */
+var myNavBar = {
+
+    flagAdd: true,
+
+    elements: [],
+
+    init: function (elements) {
+        this.elements = elements;
+    },
+
+    add : function() {
+        if(this.flagAdd) {
+            for(var i=0; i < this.elements.length; i++) {
+                document.getElementById(this.elements[i]).className += " fixed-theme";
+            }
+            this.flagAdd = false;
+        }
+    },
+
+    remove: function() {
+        for(var i=0; i < this.elements.length; i++) {
+            document.getElementById(this.elements[i]).className =
+                    document.getElementById(this.elements[i]).className.replace( /(?:^|\s)fixed-theme(?!\S)/g , '' );
+        }
+        this.flagAdd = true;
+    }
+
+};
+
+/**
+ * Init the object. Pass the object the array of elements
+ * that we want to change when the scroll goes down
+ */
+myNavBar.init(  [
+    "header",
+    "header-container",
+    "brand"
+]);
+
+/**
+ * Function that manage the direction
+ * of the scroll
+ */
+function offSetManager(){
+
+    var yOffset = 0;
+    var currYOffSet = window.pageYOffset;
+
+    if(yOffset < currYOffSet) {
+        myNavBar.add();
+    }
+    else if(currYOffSet == yOffset){
+        myNavBar.remove();
+    }
+
+}
+
+/**
+ * bind to the document scroll detection
+ */
+window.onscroll = function(e) {
+    offSetManager();
+}
+
+/**
+ * We have to do a first detectation of offset because the page
+ * could be load with scroll down set.
+ */
+offSetManager();
+});
+</script>
+</html>
