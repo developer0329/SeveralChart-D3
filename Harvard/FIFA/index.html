@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>CS171 - HW 5</title>
+
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/style.css">
+	<style> /* set the CSS */
+
+		body { font: 12px Arial;}
+
+		path { 
+			stroke: steelblue;
+			stroke-width: 3;
+			fill: none;
+		}
+
+		.axis path,
+		.axis line {
+			fill: none;
+			stroke: black;
+			stroke-width: 1;
+			shape-rendering: crispEdges;
+		}
+
+		circle{
+			color :#1C7284;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="container">
+
+		<h1>FIFA World Cup<sup>TM</sup></h1>
+		<h2>All Time Statistics</h2>
+				<!-- Select box to choose the ranking type -->
+		<form class="form-inline">
+			<div class="form-group">
+		    <label for="dataType">Chart Data:</label>
+		    <select class="form-control" id="data-type">
+			  	<option value="goals">Goals</option>
+			  	<option value="average_goals">Average Goals</option>
+			  	<option value="matches">Matches</option>
+			  	<option value="teams">Teams</option>
+			  	<option value="average_attendance">Average Attendance</option>
+			</select>
+			<label for="dataType">Time Period:</label>
+			<input type="text" name="start-time" id="start_time" value="" style="width:80px;"/>-<input type="text" name="end-time" id="end_time" value="" style="width:80px;"/>
+			<button type="button" id="filter_btn">Filter</button>
+				<!-- Activity IV -->
+				<!--<button type="button" class="btn btn-link" id="change-sorting"><i class="glyphicon glyphicon-sort"></i> Sort</button>-->
+		  </div>
+		</form>
+		<!-- Parent container for the visualization -->
+		<div id="chart-area"></div>
+		<p id="detail-view">Details:</p>
+	</div>
+
+
+
+	<!-- Load JS libraries: jQuery, bootstrap, D3, D3 tooltip -->
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/d3.min.js"></script>
+	<script src="js/d3.tip.js"></script>
+
+	<!-- Your implementation -->
+	<script src="js/main.js"></script>
+</body>
+</html>
