@@ -1,0 +1,82 @@
+{
+ 	"text": "A",
+ 	"icon": "https://www.matchlynx.com/public/images/accelerator.png",
+ 	"group": "3",
+ 	"color": "blue",
+	"children": [
+		{
+			"text":"B",
+			"icon":"https://www.matchlynx.com/images/head.ico",
+			"group": "1",
+			"color": "Red",
+			"children":[
+				{
+					"text":"E",
+					"icon":"https://www.matchlynx.com/images/head.ico",
+					"group": "2",
+					"color": "Green",
+					"children":[
+						{
+							"text":"J",
+							"icon":"https://www.matchlynx.com/images/head.ico",
+							"group": "1",
+							"color": "Red",
+							"children":[]
+						},
+						{
+							"text":"K",
+							"icon":"https://www.matchlynx.com/images/head.ico",
+							"group": "2",
+							"color": "Green",
+							"children":[]
+						}
+					]
+				},
+				{
+					"text":"F",
+					"icon":"https://www.matchlynx.com/images/head.ico",
+					"group": "2",
+					"color": "Green",
+					"children":[]
+				}
+			]
+		},
+		{
+			"text":"C",
+			"icon":"https://www.matchlynx.com/images/head.ico",
+			"group": "3",
+			"color": "blue",
+			"children":[
+				{
+					"text":"G",
+					"icon":"https://www.matchlynx.com/images/head.ico",
+					"group": "1",
+					"color": "red",
+					"children":[]
+				},
+				{
+					"text":"H",
+					"icon":"https://www.matchlynx.com/images/head.ico",
+					"group": "4",
+					"color": "Yellow",
+					"children":[]
+				}
+			]
+		},
+		{
+			"text":"D",
+			"icon":"https://www.matchlynx.com/images/head.ico",
+			"group": "4",
+			"color": "yellow",
+			"children":[
+				{
+					"text":"I",
+					"icon":"https://www.matchlynx.com/images/head.ico",
+					"group": "3",
+					"color": "blue",
+					"children":[]
+				}
+			]
+		}
+	]
+}

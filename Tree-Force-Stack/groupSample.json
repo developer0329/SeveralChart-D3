@@ -1,0 +1,29 @@
+{
+	"group":
+	[
+		{
+			"id": "The_Amazing_red",
+			"text":"The Amazing Red",
+			"nodeColor":"red",
+			"color": "lightpink"
+		},
+		{
+			"id": "green_Lanter",
+			"text":"Green Lanter",
+			"nodeColor":"green",
+			"color": "lightgreen"
+		},
+		{
+			"id": "blue_Eagles",
+			"text":"Blue Eagles",
+			"nodeColor":"blue",
+			"color": "lightblue"
+		},
+		{
+			"id": "yellow_Submarine",
+			"text":"yellow Submarine",
+			"nodeColor":"yellow",
+			"color": "lightyellow"
+		}
+	]
+}

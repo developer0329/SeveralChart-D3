@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+    font: 10px sans-serif;
+}
+.link {
+    fill: none;
+    stroke: #000;
+}
+
+
+</style>
+<body>
+	<script src="d3.v3.min.js"></script>
+	<script src="queue.min.js"></script>
+	<div id="graph"></div>
+	
+	<script>
+
+	var margin = {top: 10, right: 10, bottom: 10, left: 10},
+		width = 800
+		height = 400;
+	
+	var root = {};
+	var allNodes = [];
+	var group = [];
+	var mem_group = [];
+	var mem_idx = [];
+	var xscale, x_scale_item;
+	var max_node_width;
+	
+	queue()
+		.defer(d3.json, "group.json")
+		.defer(d3.json, "dataSample.json")
+		.await(dataLoading);
+	
+	function dataLoading(error, json1, json2){
+		
+		group = json1.group;
+		root = json2;		
+		allNodes = flatten(root);
+		
+		xscale = [];
+		x_scale_item = []
+		for(var i = 0; i < group.length; i++)
+		{
+			var count = 0;
+			for(var j = 0; j < allNodes.length; j++)
+			{
+				if(allNodes[j].group == i + 1 )count++;
+			}
+			
+			mem_group.push(count);
+			xscale.push(d3.scale.linear().domain([0, count]).range([30, width - 30]));
+			x_scale_item.push(width/count);
+			mem_idx.push(0);
+		}
+		
+		//make an SVG
+		var svg = d3.select("#graph").append("svg")
+			.attr("id", "svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		svg.append("defs").selectAll("marker")
+			.data("arrow")
+		  .enter().append("marker")
+			.attr("id", "arrow")
+			.attr("viewBox", "0 -5 10 10")
+			.attr("refX", 15)
+			.attr("refY", -1.5)
+			.attr("markerWidth", 6)
+			.attr("markerHeight", 6)
+			.attr("orient", "auto")
+		  .append("path")
+			.attr("d", "M0,-5L10,0L0,5");
+	
+
+				
+		var yscale = d3.scale.linear()
+				.domain([0, group.length])
+				.range([0, height]);
+				
+		var bkg = svg.append('g').attr('id','groups').selectAll('rect')
+				.data(group)
+				.enter()
+				.append('rect')
+				.attr('height', height/group.length - 2)				
+				.attr('id', function(d){ return d.id})
+				.attr({'x':0, 'y':function(d, i){ return yscale(i) + 2; }})				
+				.style('fill', function(d){ return d.color; });
+		
+		var grouptext = d3.select('#groups')
+				.selectAll('text')
+				.data(group)
+				.enter()
+				.append('text')
+				.attr({'x':5,'y':function(d,i){ return yscale(i)+35; }})
+				.text(function(d){ return d.id; })
+				.style({'fill':function(d){ return d.id; },'font-size':'14px'});
+		
+		// Compute the layout.
+		var tree = d3.layout.tree().size([width, height]),
+			nodes = tree.nodes(root),
+			links = tree.links(nodes);
+		
+		var nodes = svg.selectAll(".node")
+			.data(nodes)
+			.enter();
+		
+		
+		// Create the node text label.
+		var node = nodes.append('g').attr('id',function (d) {return d.text;});
+			
+			node.append("text")
+				.attr("class", "label")
+				.text(function (d) {return d.text;})
+				.attr("y", function (d) { 
+					var groupIdx = -1;
+					
+					for(var i = 0; i < group.length ; i++)
+					{
+						var str1 = d.color;
+						var str2 = group[i].id;
+						
+						if(str1.toLowerCase() == str2.toLowerCase())
+						{
+							groupIdx = i;
+							break;
+						}
+					}
+					return d.y = yscale(groupIdx) + (height/group.length)/2 + 12;
+					//return d.y + 13; 
+				})
+				.on("click", click);
+		
+		
+		var rect = node.insert("rect", ":first-child")
+			.attr("class", "node")
+			.attr("height", 20)
+			.attr("width", function(d) {
+				d.width = this.parentNode.getBBox().width;
+				return d.width;
+				})
+			.attr("id", function (d) {
+				return d.id;
+			})
+			.attr("y", function (d) {
+				var groupIdx = -1;
+				
+				for(var i = 0; i < group.length ; i++)
+				{
+					var str1 = d.color;
+					var str2 = group[i].id;
+					
+					if(str1.toLowerCase() == str2.toLowerCase())
+					{
+						groupIdx = i;
+						break;
+					}
+				}
+				return d.y = yscale(groupIdx) + (height/group.length)/2;
+				//return d.y - 10;
+			})			
+			.style('fill', function(d){ return d.color; });
+		
+
+		max_node_width = 0;
+		var node_depth = 0;
+		for(var j = 0; j < allNodes.length; j++)
+		{
+			//if(allNodes[j].group == i + 1)
+			//{
+				if(max_node_width < allNodes[j].width)
+					max_node_width = allNodes[j].width;
+			//}
+			
+			if(node_depth < allNodes[j].depth){
+				node_depth = allNodes[j].depth;
+			}
+		}
+			
+		for(var i = 0; i < group.length; i++)
+		{
+			
+			var tem_array = [];
+			var order_idx = 0;
+				
+			for(var j = 0; j < allNodes.length; j++)
+			{
+				
+				
+				if(allNodes[j].group == i + 1)
+				{
+					order_idx++;
+					tem_array.push({idx:j, depth:allNodes[j].depth, order:order_idx});
+				}
+				
+			}
+			
+			for(var k = 0; k < tem_array.length; k++){
+				var ddd = k;
+				for(var h = k + 1; h < tem_array.length; h++){
+					if(tem_array[k].depth > tem_array[h].depth)
+					{
+						var s = tem_array[k];
+						tem_array[k] = tem_array[h];
+						tem_array[h] = s;
+					}
+				}
+				allNodes[tem_array[k].idx].order = k;
+			}
+				
+			if(node_depth > mem_group[i])
+			{
+				xscale[i] = d3.scale.linear().domain([0, node_depth]).range([10, (max_node_width +40) * node_depth - 10]);
+				if(width < (max_node_width +40) * node_depth)
+				{
+					width = (max_node_width + 40)* (node_depth + 1)
+				}
+			}
+			else{
+				xscale[i] = d3.scale.linear().domain([0, mem_group[i]]).range([10, (max_node_width +40) * mem_group[i] - 10]);
+				if(width < (max_node_width +40) * (mem_group[i] + 1))
+				{
+					width = (max_node_width + 40)* (mem_group[i] + 1)
+				}
+			}
+			
+			
+			x_scale_item[i] = max_node_width +40;
+			
+			//if(width < (max_node_width +40) * mem_group[i])
+			//{
+				//width = (max_node_width + 40)* mem_group[i];
+				
+				svg.attr('width', width + margin.left + margin.right).attr('height', height);
+				document.getElementById("svg").style.width = width + margin.left + margin.right + "px";
+				bkg.attr('width', width);
+			//}	
+		}
+		
+		svg.selectAll(".node")
+			.attr("x", function (d) {
+				for(var i = 0; i < group.length; i++)
+				{
+					if(d.group == i + 1) mem_idx[i]++;
+				}
+				//var dx = xscale[d.group - 1](mem_idx[d.group - 1] - 1) + 40;
+				if(d.depth == 0)
+				{
+					var dx = xscale[d.group - 1](d.order) + 40;
+					return d.x = dx;
+				}
+				else
+				{
+					var dx = xscale[d.group - 1](d.order + 1) + 40;
+					return d.x = dx;
+				}
+					
+				//var order_idx = mem_idx[d.group - 1] - 1;
+				//if(order_idx > d.depth)
+				//{
+				//	var dx = xscale[d.group - 1](d.order) + 40;
+				//	return d.x = dx;
+				//}
+				//else{
+				//	var dx = xscale[d.group - 1](d.depth) + 40;
+				//	return d.x = dx;
+				//}
+
+			});
+		
+		svg.selectAll(".label")
+			.attr("x", function (d) {				
+				return d.x;
+			});
+		
+		nodes.append("image")
+			.attr("class", "img")
+			.attr("xlink:href", function(d) { return d.icon; })
+			.attr("x", function (d) { return d.x - 24; })
+			.attr("y", function (d) { return d.y; })
+			.attr("width", "20px")
+			.attr("height", "20px");
+			
+		// Create the link lines.
+		svg.selectAll(".link")
+			.data(links)
+			.enter().append("path")
+			.attr("class", "link")
+			.attr("d", linkArc)
+			.attr("marker-end", "url(#arrow)");
+			
+		svg.style('width', width + 20);
+		
+		function click(){
+			d3.select(this).transition()
+				.duration(750)
+				.attr("r", 30)
+				.style("fill", "lightsteelblue");
+		}
+	}
+	
+	/*To make the nodes in flat mode.
+	This gets all teh nodes in same level*/
+	function flatten(root) {
+		var n = [],
+			i = 0;
+
+		function recurse(node) {
+			if (node.children) node.children.forEach(recurse);
+			//if (!node.id) node.id = ++i;
+			n.push(node);
+		}
+		
+		recurse(root);
+		return n;
+	}
+
+	//This draws the lines between nodes.
+	function lineDraw(d, i) {
+
+		var diff = d.source.y - d.target.y;
+		//0.40 defines the point from where you need the line to break out change is as per your choice.
+		var ny = d.target.y + 10 + (diff - i*3) * 0.20;
+		var tX, tY, sX, sY, nY, nX, diff;
+		
+		if(d.target.group == d.source.group)
+		{
+			// Same Group
+			if(d.target.x > d.source.x){
+				tX = d.target.x;
+				sX = d.source.x + 20;
+				sY = d.source.y + 10;
+				tY = d.target.y + 10;
+			}
+			if(d.target.x < d.source.x){
+				tX = d.target.x + 20;
+				sX = d.source.x;
+				sY = d.source.y + 10;
+				tY = d.target.y + 10;
+			}
+			
+			linedata = [
+				{ x: tX, y: tY },
+				{ x: sX, y: sY}
+			];
+		}
+		if(d.target.group > d.source.group)
+		{
+			sX = d.source.x + 10;
+			tX = d.target.x + 10;
+			sY = d.source.y + 20;
+			tY = d.target.y;
+			
+			linedata = [
+				{ x: tX, y: tY },
+				{
+					x: tX,
+					y: ny
+				},
+				{ x: sX, y: sY}
+			];
+			
+		}
+		if(d.target.group < d.source.group)
+		{
+			sX = d.source.x + 10;
+			tX = d.target.x + 10;
+			sY = d.source.y;
+			tY = d.target.y + 20;
+			
+			linedata = [
+				{ x: tX, y: tY },
+				{ x: sX, y: sY}
+			];
+			
+		}
+		
+		var fun = d3.svg.line().
+			x(function (d) {
+				return d.x;
+			}).y(function (d) {
+				return d.y;
+			}).interpolate("step-after");
+		
+		return fun(linedata);
+	}
+	
+	function linkArc(d) {
+		var tX, tY, sX, sY;
+		var dx, dy, dr;
+		var sour = this.getBBox().width;
+		
+		if(d.target.group == d.source.group)
+		{
+			tX = d.target.x + d.target.width/2;
+			tY = d.target.y;
+			
+			sX = d.source.x + d.source.width/2;
+			sY = d.source.y;
+			
+			dx = tX - sX,
+			dy = tY - sY,
+			dr = Math.sqrt(dx * dx + dy * dy);
+			return "M" + sX + "," + sY + "A" + dr + "," + dr + " 0 0,1 " + tX + "," + tY;
+		}
+		if(d.target.group > d.source.group)
+		{
+			sX = d.source.x + d.source.width/2;
+			sY = d.source.y + 20;
+			
+			tX = d.target.x + d.target.width/2;
+			tY = d.target.y;
+			
+			dx = tX - sX,
+			dy = tY - sY,
+			dr = Math.sqrt(dx * dx + dy * dy);
+			var diff = d.target.group - d.source.group;
+			if(diff == 1)
+			{
+				dr = 0;
+				return "M" + sX + "," + sY + "A" + dr + "," + dr + " 0 0,1 " + tX + "," + tY;
+			}
+			else
+			{
+				var points = [
+					{ x: sX, y: sY },
+					{ x: x_scale_item[parseInt(d.source.group)] * (d.target.order + 1) + 2, y: sY + (height/group.length)/2},
+					{ x: x_scale_item[parseInt(d.source.group)] * (d.target.order + 1) + 2, y: sY + (height/group.length)*(diff-0.5)},
+					{ x: tX, y: tY}
+				];
+
+				var straight = d3.svg.line()
+					.x(function(d) { return d.x; })
+					.y(function(d) { return d.y; })
+					.interpolate("linear")
+					.tension(0);
+					
+				return straight(points);
+			}
+		}
+		if(d.target.group < d.source.group)
+		{
+			sX = d.source.x + d.source.width/2;
+			sY = d.source.y;
+			tX = d.target.x + d.target.width/2;	
+			tY = d.target.y + 20;
+			
+			dx = tX - sX,
+			dy = tY - sY,
+			dr = Math.sqrt(dx * dx + dy * dy);
+			var diff = d.source.group - d.target.group;
+			
+			if(diff == 1)
+			{
+				dr = 0;
+				return "M" + sX + "," + sY + "A" + dr + "," + dr + " 0 0,1 " + tX + "," + tY;
+			}
+			else{
+			
+		
+				var points = [
+					{ x: sX, y: sY },
+					{ x: x_scale_item[parseInt(d.target.group)] * (d.target.order +1) - 2, y: sY - (height/group.length)/2},
+					{ x: x_scale_item[parseInt(d.target.group)] * (d.target.order +1) - 2, y: sY - (height/group.length)*(diff-0.5)},
+					{ x: tX, y: tY}
+				];
+
+				var straight = d3.svg.line()
+					.x(function(d) { return d.x; })
+					.y(function(d) { return d.y; })
+					.interpolate("linear")
+					.tension(0);
+					
+				return straight(points);
+			}
+			
+		}
+		
+		//var dx = d.target.x - d.source.x,
+		//	dy = d.target.y - d.source.y,
+		//	dr = Math.sqrt(dx * dx + dy * dy);
+			
+		
+	}
+
+</script>

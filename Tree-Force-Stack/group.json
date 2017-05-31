@@ -1,0 +1,29 @@
+{
+	"group":
+	[
+		{
+			"id": "red",
+			"text":"red",
+			"nodeColor":"red",
+			"color": "lightpink"
+		},
+		{
+			"id": "green",
+			"text":"green",
+			"nodeColor":"green",
+			"color": "lightgreen"
+		},
+		{
+			"id": "blue",
+			"text":"blue",
+			"nodeColor":"blue",
+			"color": "lightblue"
+		},
+		{
+			"id": "yellow",
+			"text":"yellow",
+			"nodeColor":"yellow",
+			"color": "lightyellow"
+		}
+	]
+}
