@@ -1,0 +1,146 @@
+html, body{
+	height:100%;
+}
+
+
+body
+{
+	position: relative;
+}
+
+#container {
+    height: 500px; 
+    min-width: 310px; 
+    max-width: 800px; 
+    margin: 0 auto; 
+}
+.loading {
+    margin-top: 10em;
+    text-align: center;
+    color: gray;
+}
+
+.two-page-container{
+	padding:20px 100px 0px;
+}
+.two-page-container .row{
+	margin-right: 0px;
+    margin-left: 0px;
+}
+.col-sm-2{
+	text-align:center;
+	padding-top:10px;
+	font-size: 11px;
+	line-height: 30px;
+}
+
+.two-page{
+	width:60px;
+	box-shadow: 2px 2px 5px #888888;
+}
+
+.overlay{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 273px;
+	z-index: 10;
+	background: url('../image/overlay-background.png');
+	opacity: 0.7;
+	text-align:center;
+}
+
+#emailSendBtn {
+    margin: 0 0 10px;
+    background-color: #0478dc;
+    color: white;
+    font-size: 20px;
+    padding: 5px 15px;
+    border-radius: 15px;
+}
+.modal-content, .modal-dialog {
+    border-radius: 15px;
+}
+.modal-body{
+	background-color: #3c83bf;
+    border-radius: 13.5px;
+    border: solid 1px gray;
+    color: white;
+    font-size: 18px;
+}
+#myemail {
+    font-size: 14px;
+    padding: 6px;
+    border-radius: 5px;
+    border: solid 1px gray;
+    /* width: 280px; */
+	color:black;
+}
+
+/****************************************************/
+div.tooltip {
+	position: absolute;
+	text-align: center;
+	color: black;
+	width: 275px;
+	height: 37px;
+	padding: 2px;
+	font: 12px sans-serif;
+	background: grey;
+	border: 0px;
+	border-radius: 8px;
+	pointer-events: none;
+}
+
+div.bar-tooltip {
+    position: absolute;
+    text-align: left;
+    color: black;
+    /* width: 200px;
+    height: 37px; */
+    padding: 5px 10px;
+    font: 12px sans-serif;
+    background: grey;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.department{
+	fill: white;
+	stroke: black;
+	stroke-width: 0.5px;
+}
+text{
+	font-size:10px;
+}
+.bar {
+	fill: steelblue;
+}
+.bar:hover {
+	fill: brown;
+}
+.title {
+	font: bold 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.axis {
+	font: 11px sans-serif;
+}
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+.x.axis path {
+	display: none;
+}
+path {
+	fill: #ccc;
+	stroke: #fff;
+}
+circle:hover {
+	stroke:yellow;
+	stroke-width:1px;	
+}

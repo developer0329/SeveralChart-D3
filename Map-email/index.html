@@ -1,0 +1,184 @@
+<?php
+	session_start();
+?>
+
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Market Information</title>
+		<link rel="stylesheet" href="css/style.css">
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+		
+		<script src="https://d3js.org/d3.v3.min.js"></script>
+		<script src="https://d3js.org/topojson.v1.min.js"></script>
+		<script src="https://d3js.org/queue.v1.min.js"></script>
+		
+	</head>
+	<body>
+		<div id="map"></div>
+
+		<script>
+			var width = 900, height = 600;
+
+			// Create a path object to manipulate geo data
+			var path = d3.geo.path();
+
+			// Define projection property
+			var projection = d3.geo.conicConformal() // Lambert-93
+				.center([2.454071, 46.279229]) // Center on France
+				.scale(3900)
+				.translate([width / 2, height / 2]);
+
+			path.projection(projection); // Assign projection to path object
+
+			// Create the DIV that will contain our map
+			var svg = d3.select('#map').append("svg")
+				.attr("id", "svg")
+				.attr("width", width)
+				.attr("height", height)
+				.attr("viewBox", "0 0 " + width + " " + height)
+				.attr("preserveAspectRatio", "xMinYMid");
+
+			// Append the group that will contain our paths
+			var deps = svg.append("g");
+				
+			// Load GeoJSON data and run a function for each entry
+			d3.json('data/departments.json', function(req, geojson) {
+
+				// Bind the entry to a SVG path
+				deps.append("g")
+					.attr("class", "department-bundle")
+					.selectAll("path")
+					.data(geojson.features)
+					.enter()
+					.append("path")
+					.attr('class', 'department')
+					.attr("d", path)
+					.on("mouseover", function(d) {
+					
+						div.transition()        
+							.duration(200)      
+							.style("opacity", .9);      
+						div.html("Département : " + d.properties.NOM_DEPT + "<br/>"
+								+  "Région : " + d.properties.NOM_REGION + "<br/>"
+								+  "Code : " + d.properties.CODE_DEPT
+							  )  
+							.style("left", (d3.event.pageX + 30) + "px")     
+							.style("top", (d3.event.pageY - 30) + "px")
+					})
+					.on("mouseout", function(d) {
+						div.transition()
+							.duration(500)
+							.style("opacity", 0);
+						div.html("")
+							.style("left", "0px")
+							.style("top", "0px");
+					})
+					.on("click", function(d) {
+						var x, x1, x2, y, y1, y2;
+						
+						x1 = d.properties.X_CENTROID;
+						y1 = d.properties.Y_CENTROID;
+						var geoData = geojson.features;
+						var distance = [];
+						for(var i = 0; i < geoData.length; i++)
+						{
+							x2 = geoData[i].properties.X_CENTROID;
+							y2 = geoData[i].properties.Y_CENTROID;
+							
+							if(x1 > x2){
+								x = x1 - x2;
+							}
+							else{
+								x = x2 - x1;
+							}
+							
+							if(y1 > y2){
+								y = y1 - y2;
+							}
+							else{
+								y = y2 - y1;
+							}
+							
+							var dist = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+							
+							distance.push({ "dept" : geoData[i].properties.CODE_DEPT, "dist" : dist});
+						}
+						
+						distance.sort(function(a, b) {
+							return parseFloat(a.dist) - parseFloat(b.dist);
+						});
+						var con = "";
+						for(var i = 0; i < 10; i++)
+						{
+							con = con + "," + distance[i].dept;
+						}
+						
+						$.get("email.php", { data: con }, function(result){
+							if(result == "1")
+								window.location="email.php";
+						});
+						
+						//window.location="figure2.html?data=" + '<?php echo fnEncrypt($Clear, $Pass); ?>';
+						//window.location="send.php?data=" + con;
+											
+						//$.get("send.php", {data: con, to: "tan.jinchao@yahoo.com"}, function(result){
+						//	alert(result);
+						//});
+	
+						//console.log("Click");
+					});
+
+
+				deps.append("g")
+					.attr("class", "department-code")
+					.selectAll("text")
+					.data(geojson.features)
+					.enter()
+					.append("svg:text")
+					.text(function(d){
+						console.log(d.properties.X_CENTROID + ", " + d.properties.Y_CENTROID);					
+						
+						return d.properties.CODE_DEPT;
+					})
+					.attr("x", function(d){
+					  return path.centroid(d)[0];
+					})
+					.attr("y", function(d){
+					  return  path.centroid(d)[1];
+					})
+					.attr("text-anchor","middle")
+					.attr('fill', 'black')
+					.on("mouseover", function(d) {
+					
+						console.log(d.properties.CODE_DEPT);
+						
+						div.transition()        
+							.duration(200)      
+							.style("opacity", .9);      
+						div.html("Département : " + d.properties.NOM_DEPT + "<br/>"
+								+  "Région : " + d.properties.NOM_REGION + "<br/>"
+								+  "Code : " + d.properties.CODE_DEPT
+							  )  
+							.style("left", (d3.event.pageX + 30) + "px")     
+							.style("top", (d3.event.pageY - 30) + "px")
+					})
+					.on("mouseout", function(d) {
+						div.transition()
+							.duration(500)
+							.style("opacity", 0);
+						div.html("")
+							.style("left", "0px")
+							.style("top", "0px");
+					});
+					
+			});
+			
+			// Append a DIV for the tooltip
+			var div = d3.select("body").append("div")   
+				.attr("class", "tooltip")               
+				.style("opacity", 0);
+		</script>
+	</body>
+</html>
