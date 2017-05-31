@@ -1,0 +1,176 @@
+body {padding:0; margin:0; font-family: Tahoma, Geneva, sans-serif; font-size: 12px;}
+
+
+
+#logo-div {
+  padding-top: 10px;
+  position: relative;
+}
+
+#logo-div img {
+  float: left;
+}
+
+#logo-div span {
+
+}
+
+#logo-div a {
+  font-family:Geneva,'Century Gothic',Arial,Verdana,Helvetica,sans-serif;
+  font-size: 16px;
+  color: #882E3C;
+  text-decoration: none;
+}
+
+h1 {
+  font-size:143%;
+  margin-top:4px;
+  padding-bottom:0;
+   margin-bottom:8px;
+}
+
+h3 {
+  font-size:120%;
+   padding-top:8px;
+   padding-bottom:0;
+   margin-top:0;
+   margin-bottom:0;
+}
+
+p a:link, p a:visited {
+  color: #064fde;
+  text-decoration: none;
+}
+p a:hover {
+  text-decoration: underline;
+}
+
+.results-circle {
+  fill-opacity:1;
+  fill:black;
+  box-shadow: 0px 0px 20px rgba(0,0,0,.8);
+}
+
+    /*#map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      cursor:default;
+    }*/
+    #tooltip {
+		text-align:center;
+		padding: 10px;
+		border: solid 1px gray;
+		border-radius: 10px;
+		-moz-box-shadow: inset 0 0 10px #000000;
+		-webkit-box-shadow: inset 0 0 10px #000000;
+		box-shadow: inset 0 0 10px #000000;
+    }
+
+    #legend {
+		position: absolute;
+		width: 360px;
+		margin-right: 10px;
+		left: 30px;
+		top:350px;
+		z-index: 1;	  
+    }
+    
+    #legend-svg-holder {
+        height: 90px;
+        margin-top: 5px;
+        margin-left: -5px;
+    }
+
+    circle, size-circle {
+      fill-opacity: .7;
+      stroke: #000;
+      stroke-opacity: .7;
+      stroke-width: 1px;
+    }
+    .size-circle {
+      fill: #ddd;
+    }
+
+    .point:hover {
+      stroke-width: 2.4px;
+    }
+
+    circle.inactive {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #site-name-row {
+      margin-top: 5px;
+      margin-bottom:0;
+      padding-bottom:0;
+    }
+    .first-col {
+      padding-right: 6px;
+    }
+    
+    rect {
+      cursor: pointer;
+    }
+	
+.row {
+    margin-right: 0px;
+    margin-left: 0px;
+}
+
+#range_03, #range_02
+{
+	display:none;
+}
+#controls .row
+{
+	padding: 10px 0px;
+}
+#controls .form-control {
+    display: initial;
+    width: 70%;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.browser text {
+  text-anchor: end;
+}
+
+.area {
+  opacity: 0.7;
+  clip-path: url(#clip);
+}
+.area:hover {
+  opacity: 1;
+}
+
+.axis path,
+.axis line{
+fill: none;
+stroke: black;
+}
+
+.line{
+fill: none;
+stroke: blue;
+stroke-width: 2px;
+}
+
+.tick text{
+font-size: 12px;
+}
+
+.tick line{
+opacity: 0.2;
+}

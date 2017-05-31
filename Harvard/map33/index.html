@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>d3.js with leaflet.js</title>
+
+    <style>
+        @import url(css/leaflet.css);
+        @import url(css/bootstrap.min.css);		
+		@import url(css/ion.rangeSlider.css);
+		@import url(css/ion.rangeSlider.skinModern.css);
+        @import url(css/style.css);
+    </style>
+	
+    <script src="js/jquery-1.12.3.min.js"></script>
+    <script src="js/d3.v3.min.js" charset="utf-8"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+	
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/ion.rangeSlider.min.js"></script>
+    
+</head>
+<body>
+	<div class="container-fluid">
+	<div class="row" style="padding:10px;">
+		<div id="controls" class="col-md-3">
+			<div class="row">
+				<input type="checkbox" id="chkYear" checked="true">Show selected year
+				<div id="stacked-area-chart"></div>
+			</div>
+			<div class="row">
+				<label>Size by:</label>
+				<select class="form-control" id="selSizeBy">
+					<option value="capacity">Capacity(MW)</option>
+					<option value="generation">Generation(MW)</option>
+				</select>
+			</div>
+			<div class="row" >
+				<label>Filter by:</label>
+			
+				<div class="row" style="padding:10px 0px 0px 10px;">
+					<label>Type of Plant</label>
+					<ul>
+						<li><input type="checkbox" id="chkTypeCoal" checked="true">Coal</li>
+						<li><input type="checkbox" id="chkTypeNaturalGas" checked="true">Natural Gas</li>
+						<li><input type="checkbox" id="chkTypeWind" checked="true">Wind</li>
+						<li><input type="checkbox" id="chkTypeSolar" checked="true">Solar</li>
+						<li><input type="checkbox" id="chkTypeNuclear" checked="true">Nuclear</li>
+					</ul>
+					
+					<div class="row">
+						<label>Capacity(MW)</label>
+						<input id="range_03" class="irs-hidden-input"/>
+					</div>
+					<div class="row">
+						<label>Year Built</label>
+						<input id="range_02" class="irs-hidden-input"/>
+					</div>
+					<div class="row">
+						<label>Balancing Authority</label>
+						<select class="form-control" id="selBalance">
+							<option value="all">All</option>
+						</select>
+					</div>
+				
+				</div>
+
+			</div>
+		</div>
+		<div class="col-md-9">
+			<div class="row">
+				<div id="map" style="width: 100%; height: 500px"></div>
+				<div id="legend">
+				  <div id='logo-div'></div>      
+				  <div id="legend-svg-holder"><span>Generation by MWh</span><span style="margin-left: 120px;">Plant Fuel Type</span></div>
+				</div>
+			</div>
+			<div class="row" style="padding:10px;">
+				<div id='tooltip' style="height:200px;">
+					<h1 id="plant_name"></h1>
+					<div class="row">
+						<div id='tooltip-data' class="col-md-6">
+							<table id='details-table'>
+								<tr><td class='first-col'>Address</td><td id="addr_info"></td></tr>
+								<tr><td class='first-col'>Technology type</td><td id="tech_type"></td></tr>
+								<tr><td class='first-col'>Capacity </td><td id="inst_cap"></td></tr>
+								<tr><td class='first-col'>Generation </td><td id="gen_commenced"></td></tr>
+							</table>
+						</div>
+						<div id='tooltip-chart' class="col-md-6">
+						</div>
+					</div>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+	</div>
+	<script>
+		
+	</script>
+	<script>
+		
+		$(document).ready(function(){
+		
+			/**
+			* Variables for Filter
+			*/
+			var chkYear = true;
+			var selSizeBy = "capacity";
+			var selBalance = "all";
+			
+			var selYear = "2009";
+			var ranCapac = [0, 800];
+			var chkTypeCoal = true;
+			var chkTypeNaturalGas = true;
+			var chkTypeWind = true;
+			var chkTypeSolar = true;
+			var chkTypeNuclear = true;
+			
+			/**
+			* Year Silder for Filter
+			*/
+			$("#range_02").ionRangeSlider({
+				grid: true,
+				min: 1,
+				max: 5,
+				step: 1,
+				values: [2009, 2010, 2011, 2012, 2013, 2014]
+			});
+			
+			/**
+			* Capacity Silder for Filter
+			*/
+			$("#range_03").ionRangeSlider({
+				type: "double",
+				grid: true,
+				min: 0,
+				max: 2000,
+				from: 0,
+				to: 800,
+				onFinish: function (data) {
+					ranCapac = [data.from, data.to];
+					dataLoading();
+				}
+			});
+		
+		
+
+		
+			$("#selSizeBy").change(function() {
+				selSizeBy = this.value;
+			});
+			$("#selBalance").change(function() {
+				selBalance = this.value;
+			});
+			
+			$("#chkYear").change(function() {
+				chkYear = this.value;
+			});
+			
+			$("#range_02").change(function() {
+				selYear = this.value;
+				dataLoading();
+			});		
+					
+			$('#chkTypeCoal').change(function() {
+				chkTypeCoal = this.checked;
+				dataLoading();
+			});
+			
+			$('#chkTypeNaturalGas').change(function() {
+				chkTypeNaturalGas = this.checked;
+				dataLoading();
+			});
+			
+			$('#chkTypeWind').change(function() {
+				chkTypeWind = this.checked;
+				dataLoading();
+			});
+			
+			$('#chkTypeSolar').change(function() {
+				chkTypeSolar = this.checked;
+				dataLoading();
+			});
+			
+			$('#chkTypeNuclear').change(function() {
+				chkTypeNuclear = this.checked;
+				dataLoading();
+			});
+			
+			// initialize the map on the "map" div with a given center and zoom
+			var mapZoom = 6;
+			var map = L.map('map').setView([37.0902, -95.7129], 4);
+			mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+			L.tileLayer(
+				'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+				{
+					attribution: '&copy; ' + mapLink + ' Contributors',
+					zoom: mapZoom,
+					maxZoom: 13,
+				}).addTo(map);
+					
+			/* Initialize the SVG layer */
+			map._initPathRoot()    
+
+			var colourScale = d3.scale.category20();
+			
+			/* We simply pick up the SVG from the map object */
+			var svg , g;
+			var arr = [];
+			
+			/**
+			* Data Loading, Rerange and SVG initial
+			*/
+			
+			function dataLoading(){
+				//SVG Initialize
+				d3.select("#map").select("svg").selectAll("*").remove();
+				d3.select("#legend-svg-holder").selectAll("*").remove();
+				
+				svg = d3.select("#map").select("svg");
+				g = svg.append("g");
+				
+				// Loading Data
+				d3.json("plants-2.0.0.json", function(json) {
+					
+					
+					arr = $.map(json, function(el) { return el }); // Total Data JSON -> Array
+					var objects = [];                              // Last Reranged Total Data
+					
+					// Rerange of Initial Total Data
+					for (var i = 0; i < arr.length; i++)
+					{
+						// Check for Bad Elements 
+						if(arr[i].hasOwnProperty("annual_data"))
+						{
+							if(arr[i].long != null && arr[i].lat != null)
+							{
+								var annual_data = arr[i].annual_data;
+								// Filter Year
+								if(annual_data.hasOwnProperty(selYear))
+								{
+									// Filter Capacity Range
+									if(+annual_data[selYear].capacity > +ranCapac[0] && +annual_data[selYear].capacity < +ranCapac[1])
+									{
+										// Last Data Object for a Circle(Power Plant) 
+										var circle = {
+											"circle":{
+												"coordinates":[arr[i].lat, arr[i].long],
+												"plant_type": annual_data[selYear].plant_type,
+												"generation":annual_data[selYear].generation,
+												"capacity":annual_data[selYear].capacity,
+												"year":selYear,
+												"type":arr[i].type,
+												"name":arr[i].name,
+												"addr_info":arr[i].address + ", " + arr[i].county + " " + arr[i].city,
+												"indexOf":i
+											}
+										};
+										
+										// Add in Last Total Data Array according to filter values
+										if(chkTypeCoal && annual_data[selYear].plant_type == "Coal")
+										{
+											objects.push(circle);
+										}
+										if(chkTypeNaturalGas && annual_data[selYear].plant_type == "Gas")
+										{
+											objects.push(circle);
+										}
+										if(chkTypeSolar && annual_data[selYear].plant_type == "Solar")
+										{
+											objects.push(circle);
+										}
+										if(chkTypeWind && annual_data[selYear].plant_type == "Wind")
+										{
+											objects.push(circle);
+										}
+										if(chkTypeNuclear && annual_data[selYear].plant_type == "Nuclear")
+										{
+											objects.push(circle);
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					// Drawing Graph
+					updateGraph(objects);
+				});
+			}
+			function updateGraph(objects)
+			{
+				var persistGentypeSelection = false, persistedGentype;
+				var collection = {"objects":objects};
+
+				collection.objects.forEach(function(d) {
+					//Zooms the map while keeping a specified point on the map stationary
+					d.LatLng = new L.LatLng(d.circle.coordinates[0], d.circle.coordinates[1])
+				})
+				
+				var feature = g.selectAll("circle")
+					.data(collection.objects)
+					.enter().append("circle")
+						.attr("r", function(d) {
+							// Compute Suitable Radius for Drawing with Capacity
+							// You Can modify this part for radius
+							var r = +d.circle.capacity / 10;
+							r = Math.sqrt(r) * mapZoom / 4.5;
+							if(r < 3) r = 3;
+							return r;
+						})
+						.style("fill", function(d) {return colourScale(d.circle.plant_type)})
+						.attr("class", function(d) {return "point point-" + colourScale.domain().indexOf(d.circle.plant_type)})
+						.on("mouseover", function(d) {
+							//When mouse over on circle, Display Tooltip and Detail
+							d3.select("#plant_name").html(d.circle.name);
+							d3.select("#addr_info").html(d.circle.addr_info);
+							d3.select("#inst_cap").html(d.circle.capacity + " MW");
+							d3.select("#gen_commenced").html(d.circle.year + ", " + d.circle.generation);
+							
+							// Preparing Data For Detail Line Chart
+							var detail_obj = arr[d.circle.indexOf].annual_data;
+							var key_arr = Object.keys(detail_obj);
+							detail_obj = $.map(detail_obj, function(el) { return el });
+							var dataset = [];
+							for(var i = 0; i < key_arr.length; i++)
+							{
+								var obj = {x: i, year:key_arr[i], y:detail_obj[0].capacity};
+								dataset.push(obj);
+								
+							}
+							// Drawing Detail Line Chart on bottom
+							detail_draw(dataset);
+						});
+				   
+					// Draw Legend
+					var legendSvg = d3.select("#legend-svg-holder").append("svg")
+						.attr("width", "400px")
+						.attr("height", "90px");
+					legendSvg.selectAll("rect")
+						.data(colourScale.domain())
+						.enter()
+						.append("rect")
+						.attr("x", function(d,i) {  // x-position
+								if( i > 3)
+									return 95;
+								else
+									return 15;
+						})
+						.attr("y", function(d,i) {  // y-position
+							if( i > 3)
+								return (i - 4) * 20 + 2;
+							else
+								return i * 20 + 2
+						})
+						.attr("width", '78px')
+						.attr("height", '20px')
+						.attr("fill", 'white')
+						.attr("stroke", 'none')
+						//When mouse over and click on legend, Display Filter Effect.
+						.on("mouseover", function(d) {
+							
+							if (!persistGentypeSelection) {
+								d3.select(this).style('fill', '#e8e8e8');
+								feature.classed("inactive",function(p) {
+									return d != p.circle.plant_type
+								});
+							}
+						})
+						.on("click", function(d) {
+							if (!persistGentypeSelection || persistedGentype != d) {
+								// persist the selected gen type
+								persistGentypeSelection = true;
+								persistedGentype = d;
+								legendSvg.selectAll("rect")
+									.style('fill', 'white');
+								d3.select(this).style('fill', '#ddd');
+								feature
+								 .classed("inactive",function(p) {
+									return d != p.circle.plant_type
+								});
+							} else {
+								// show all gen types
+								persistGentypeSelection = false;
+								d3.select(this)
+								 .style('fill', 'white');
+								feature
+									.classed("inactive",false);
+							}
+						})
+						.on("mouseout", function(d) {
+							if (!persistGentypeSelection) {
+								d3.select(this).style('fill', 'white');
+								feature.classed("inactive",false);
+							}
+						});
+					legendSvg.selectAll("circle")
+						.data(colourScale.domain())
+						.enter()
+						.append("circle")
+						.attr("cx", function(d,i) {
+								if( i > 3)
+									return 110;
+								else
+									return 30;
+						})
+						.attr("cy", function(d,i) {
+							if( i > 3)
+								return (i - 4) * 20 + 12;
+							else
+								return i * 20 + 12
+						})
+						.attr("r", 7)
+						.attr("fill", function(d) {return colourScale(d)})
+						.attr('pointer-events', 'none');
+					legendSvg.selectAll("text")
+						.data(colourScale.domain())
+						.enter()
+						.append("text")
+						.attr("x",function(d,i) {
+								if( i > 3)
+									return 125;
+								else
+									return 45;
+						})
+						.attr("y", function(d,i) {
+							if( i > 3)
+								return (i - 4) * 20 + 15;
+							else
+								return i * 20 + 15
+						})
+						.text(function(d) {return d})
+						.attr('pointer-events', 'none');
+					var legendSizeCircle = legendSvg.selectAll(".size-circle")
+						.data([100, 50, 10])
+						.enter()
+						.append("circle")
+						.attr('class', 'size-circle')
+						.attr("cx", 245)
+						.attr("cy", function(d, i) { return [20, 50, 75][i] })
+						.attr("r", function(d) {return Math.sqrt(d) * mapZoom/4.5});
+					var legendSizeText = legendSvg.selectAll(".size-text")
+						.data([100, 50, 10])
+						.enter()
+						.append("text")
+						.attr('class', 'size-text')
+						.attr("x", 280)
+						.attr("y", function(d, i) { return [20, 50, 75][i] + 5})
+						.text(function(d) {return d/4 + ' million MWh'});
+			  
+				map.on("viewreset", update);
+				update();
+
+				function update() {
+					feature.attr("transform", 
+					function(d) { 
+						return "translate("+ 
+							map.latLngToLayerPoint(d.LatLng).x +","+ 
+							map.latLngToLayerPoint(d.LatLng).y +")";
+						}
+					)
+				}
+			}
+			
+			// At first, Call Data Loading Function
+			dataLoading();
+			
+			/**
+			*  Drawing Function for Detail Line Chart on Bottom
+			*/
+			function detail_draw(datas)
+			{
+				// Initialize SVG for Detail Line Chart
+				d3.select("#tooltip-chart").selectAll("*").remove();
+				
+				var detail_m = {top: 10, right: 50, bottom: 50, left: 150},
+					detail_w = $("#tooltip-chart").width() - detail_m.left - detail_m.right,
+					detail_h = 180 - detail_m.top - detail_m.bottom;
+
+				var detail_xScale = d3.scale.linear()
+					.domain([0, d3.max(datas, function(d){ return d.x; })])
+					.range([0, detail_w]);
+
+				var detail_yScale = d3.scale.linear()
+					.domain([0, d3.max(datas, function(d){ return d.y; })])
+					.range([detail_h, 0]);
+
+				var detail_xAxis = d3.svg.axis()
+					.scale(detail_xScale)
+					.orient("bottom")
+					.innerTickSize(-detail_h)
+					.outerTickSize(5)
+					.tickPadding(10)
+					.tickFormat("");
+				var detail_yAxis = d3.svg.axis()
+					.scale(detail_yScale)
+					.orient("left")
+					.innerTickSize(-detail_w)
+					.outerTickSize(0)
+					.tickPadding(10);
+				
+				var detail_line = d3.svg.line()
+					.x(function(d) { return detail_xScale(d.x); })
+					.y(function(d) { return detail_yScale(d.y); });
+
+				var svgDetail = d3.select("#tooltip-chart").append("svg")
+					.attr("width", detail_w + detail_m.left + detail_m.right)
+					.attr("height", detail_h + detail_m.top + detail_m.bottom)
+				  .append("g")
+					.attr("transform", "translate(" + detail_m.left + "," + detail_m.top + ")");
+					
+				  svgDetail.append("g")
+					  .attr("class", "x axis")
+					  .attr("transform", "translate(0," + detail_h + ")")
+					  .call(detail_xAxis)
+
+				  svgDetail.append("g")
+					  .attr("class", "y axis")
+					  .call(detail_yAxis)
+
+				  svgDetail.append("path")
+					  .data([datas])
+					  .attr("class", "line")
+					  .attr("d", detail_line);
+			}
+			  
+		});
+	</script>
+	
+	<!-- JS for Stacked Area Chart on Sidebar -->
+	<script src="js/stackedAreaChart.js"></script> 
+	<script src="js/main.js"></script>
+	
+</body>
+</html>
