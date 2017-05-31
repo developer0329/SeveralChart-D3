@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+	<meta charset=utf-8>
+	<head>
+		<link rel=icon href=http://getbootstrap.com/favicon.ico>
+		<title>Knowledge Graph</title>
+		<link href="dist/bootstrap.min.css" rel="stylesheet">
+		<script src="dist/d3.v3.min.js"></script>
+		<script src="dist/d3.tip.v0.6.3.js"></script>
+		<script src="vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+		<script src="vendor/jquery-1.11.2.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.2.js"><\/script>')</script>
+		<link href="dist/style.css" rel="stylesheet">
+		<link rel="stylesheet" href="style.css" type="text/css" />
+	</head>
+<body>
+	<nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarCollapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="index.html">StackVis</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="index.html" target="_blank">Home</a></li>
+					<li><a href="tagcompare.html" target="_blank">About</a></li>
+					<li><a href="techtask.html" target="_blank">Contact</a></li>
+				</ul>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav float right">
+					<li class="active"><a href="index.htm" target="_blank">Default</a></li>
+					<li><a href="index.html" target="_blank">Default top</a></li>
+					<li><a href="index.html" target="_blank">fixed top</a></li>
+					
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="container">
+		<div class="jumbotron">
+			<h2>StackVis</h2>
+			<h3><small>StackVis is a web application for the interactive visual exploration of user information and trends for the programming knowledge market website Stack Overflow. The application will create a visualisation of the top user data and tags which the user can browse in order to get insight into the searched user’s trends. The visualisation aspect of the web application will be created using graph drawing algorithms in order to achieve a better representation of the top user profiles on Stack Overflow which will aid the user in a better understanding of that user’s profile and his/her trends. Interaction the resulting graph, will help gain an understanding of that user’s specialisation in programming technologies.
+			</small>
+			</h3>
+			</br>
+		</div>
+		<div class="row">
+			<div class="col-lg-8 col-lg-offset-2">
+				<div class="input-group">
+					<input id="searchText" type="text" class="form-control input-lg" placeholder="Search for tags...">
+					<span class="input-group-btn">
+						<button id= "searchBtn" class="btn btn-default btn-lg" type="button">
+							<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+						</button>
+					</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-lg-8 col-lg-offset-2">
+				<div class="input-group">
+					<input id="searchUserText" type="text" class="form-control input-lg" placeholder="Search for users...">
+					<span class="input-group-btn">
+						<button id= "searchUserBtn" class="btn btn-default btn-lg" type="button">
+							<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+						</button>
+					</span>
+				</div>
+			</div>
+		</div>
+		<div id="searchResult" class="col-md-4 center-block">
+                <h2>Result of your search</h2>
+                <ul id="thelist">
+
+                </ul>
+
+            </div>  
+		<br/>
+		<br/>
+		<br/>
+		<div class="row">
+			<div class="col-lg-10">
+				<h4>The knowledge graph of Stack Overflow: <span class="label label-info">right click</span> the node for its definition or <span class="label label-info">double click</span> for more details.</h4>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-10">
+				<div id="graph" style="text-align:center"></div>
+			</div>
+		</div>
+		<script src="data/graph.js"></script>
+		<script>
+          
+                var featureContent=	
+					{	nodes:[{name:"osx",group:0,degree:10},{name:"twitter-bootstrap",group:1,degree:5}],links:[]};     
+
+                function callJava(){
+					var searchedTag = ('java');
+					callNodes(searchedTag);
+                }
+
+                function callNodes(node) {
+                    $.get("http://api.stackexchange.com/2.2/tags/" + node + "/related?site=stackoverflow", function (data) {
+                        allRelatedNodes = data["items"];
+                        setNodes(allRelatedNodes);
+                    });
+
+                }
+
+                function callForUserName(node) {
+                    $.get("https://api.stackexchange.com/2.2/users/" + node + "/tags?order=desc&sort=popular&site=stackoverflow ", function (data) {
+                        allRelatedNodes = data["items"];
+
+                        setNodes(allRelatedNodes);
+                    });
+
+                }
+
+                function setNodes(allNodes) {
+                    
+					featureContent = { nodes:[{name:"osx",group:0,degree:10}, {name:"twitter-bootstrap",group:1,degree:5}],links:[]};
+					
+                    for (var i = 0; i < allNodes.length; i++) {
+
+                        var colorRandom = Math.floor(Math.random() * 18) + 1;
+                        var name = allNodes[i].name;
+                        var newNode = {'name': name, 'group': colorRandom, 'degree': 5};
+                        $("#thelist").append("<li>" + name + "</li>");
+						
+                        featureContent.nodes.push(newNode);
+                    }
+					
+					d3.selectAll("svg").remove();
+					featureGraph(featureContent,1150,1070,0,"#graph",90,-100);
+
+                }
+
+                $('#searchBtn').on('click', function () {
+                                    var searchedTag = $('#searchText').val();
+                                    $('ul').empty();
+                                    callNodes(searchedTag);
+                                });
+
+                $('#searchUserBtn').on('click', function () {
+                    var searchedUser = $('#searchUserText').val();
+                    $('ul').empty();
+                    callForUserName(searchedUser);
+                    console.log("Tag search node formation");
+                    console.log(featureContent);
+                });  
+                callJava();
+                              
+            </script>
+		</br>
+		</br>
+		<p align="center">&copy; Copyright 2015 | StackVis</p>
+	</div>
+	<script src="dist/jquery.min.js"></script>
+	<script src="dist/bootstrap.min.js"></script>
+	<script src="dist/jquery-ui.min.js"></script>
+	<script src="dist/bootbox.js"></script>
+</body>
