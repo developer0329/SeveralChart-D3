@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+	.link {
+	  fill: none;
+	  stroke: #666;
+	  stroke-width: 1.5px;
+	}
+
+	circle {
+		cursor: move;
+		fill: #ccc;
+		stroke: #fff;
+		stroke-width: 1.5px;
+	}
+
+	text {
+	  font: 10px sans-serif;
+	  pointer-events: none;
+	}
+	
+	.fixed circle {
+	  fill: #f00;
+	}
+
+</style>
+<body>
+<!--  <script src="//d3js.org/d3.v3.min.js"></script>
+ <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script> -->
+
+<script src="d3.v3.min.js"></script>
+<script src="jquery.min.js"></script>
+<script>
+var width 		= window.innerWidth - 30,
+	height 		= window.innerHeight - 30, 
+	delay 		= 1000,
+	lastModifiedDate = 0,
+	totalData   = [],
+	links 		= [],
+	nodes 		= [],
+	minRadius 	= 3,
+	maxRadius 	= 15,
+	maxWeight 	= 1;
+	
+	var color = d3.scale.category10();
+
+	var force = d3.layout.force()
+		.nodes(nodes)
+		.links(links)
+		.charge(-400)
+		.linkDistance(120)
+		.size([width, height])
+		.on("tick", tick);
+	var drag = force.drag()
+		.on("dragstart", dragstart);
+		
+	var svg = d3.select("body").append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+	var node = svg.selectAll(".node"),
+		link = svg.selectAll(".link");
+
+	// 1. Add node.
+	function addNode(n) {
+		nodes.push(n);
+		start();
+	};
+
+	// 2. Remove node
+	function removeNode(idx) {
+		nodes.splice(idx, 1); // remove b
+		start();
+	};
+
+	// Add link.
+	function addLink(l) {
+	  links.push(l);
+	  start();
+	};
+	
+	// Remove link.
+	function removeLink(idx) {
+	  links.splice(idx, 1);
+	  start();
+	};
+	
+	function findNode(id) {
+		for (var i in nodes) {
+			if (nodes[i]["id"] === id) return nodes[i];
+		}
+	};
+
+	function findNodeIndex(id) {
+		if(nodes.length == 0) return -1;
+		
+		for (var i = 0; i < nodes.length; i++) {
+			if (nodes[i].id == id) {
+				return i;
+			}
+		}
+		
+		return -1;
+	};
+	
+	function start() {		
+		var wArray = [];
+		link = link.data(force.links(), function(d) {
+			var key = d.source.id;
+			var val = d.source.weight;
+			wArray.push({key:val});
+			return d.source.id + "-" + d.target.id;
+		});
+		link.enter().insert("line", ".node").attr("class", "link");
+		link.exit().remove();
+		
+
+		node = node.data(force.nodes(), function(d) { return d.id;});
+		var nodeEnter = node.enter().append("g")
+			.attr("class", "node")			
+			.on("dblclick", dblclick)
+			.call(drag);
+		nodeEnter.append("circle")
+			.attr("class", function(d) { return "node " + d.id; })
+			.attr("r", function(d) {
+				//console.log(d.weight);
+				return minRadius + (maxRadius - minRadius) * (d.weight)/(3*width/height); 
+				//return 6;
+			});
+		nodeEnter.append("text")
+			.attr("x", 14)
+			.attr("y", ".31em")
+			.text(function (d) {
+				return d.id;
+			});
+			
+		node.exit().remove();
+
+		force.start();
+	};
+
+	function tick() {
+		node.attr("transform", function (d) {
+			return "translate(" + d.x + "," + d.y + ")";
+		});
+
+		link.attr("x1", function (d) {return d.source.x;})
+			.attr("y1", function (d) { return d.source.y; })
+			.attr("x2", function (d) { return d.target.x; })
+			.attr("y2", function (d) { return d.target.y; });
+	};
+	
+	function dblclick(d) {
+		d3.select(this).classed("fixed", d.fixed = false);
+	}
+
+	function dragstart(d) {
+		d3.select(this).classed("fixed", d.fixed = true);
+	}
+	
+	d3.select(window).on("resize", resize);
+  
+	function resize() {
+		width = window.innerWidth - 30, height = window.innerHeight-30;
+		svg.attr("width", width).attr("height", height);
+		var len = ( height + width ) / links.length;
+		if(len > 350) len = 350;
+		force
+			.linkDistance(len)
+			.charge(-height/2)		
+			.size([width, height]).resume();
+		start(); 
+	}
+	
+	function updateData(data)
+	{
+		console.log("datas:" + JSON.stringify(data));
+		
+		var array1 = [];
+		var array2 = [];
+		
+		for(var i = 0, iLen = data.length; i < iLen; i++) {
+			if(data[i].source == "" || data[i].source == 'undefined') break;
+			if(data[i].target == "" || data[i].target == 'undefined') break;
+			if(array1.indexOf(data[i].source) < 0) array1.push(data[i].source);
+			if(array1.indexOf(data[i].target) < 0) array1.push(data[i].target);
+			
+			var node_index = findNodeIndex(data[i].source);			
+			
+			var count1 = 0, count2 = 0;
+			
+			for (var k = 0; k < data.length; k++) {
+				
+				if(data[i].source == data[k].source)
+				{
+					count1++;
+				}
+				
+				if(data[i].source == data[k].target)
+				{
+					count1++;
+				}
+				
+				if(data[i].target == data[k].source)
+				{
+					count2++;
+				}
+				
+				if(data[i].target == data[k].target)
+				{
+					count2++;
+				}
+			}
+
+
+			if( node_index < 0 )
+			{
+				var a = {id:data[i].source, weight:count1};			
+				addNode(a);
+			}			
+			
+			node_index = findNodeIndex(data[i].target);
+			if(node_index < 0)
+			{
+				var b = {id:data[i].target,weight:count2};			
+				addNode(b);
+			}
+		}
+		
+		for(var i = 0, iLen = nodes.length; i < iLen; i++ )
+		{
+			array2.push(nodes[i].id);
+		}
+		
+		//var array3 = array1.filter(function(obj) { return array2.indexOf(obj) == -1; }); // Add
+		var array4 = array2.filter(function(obj) { return array1.indexOf(obj) == -1; }); // Remove
+		for(var i = 0, iLen = array4.length; i < iLen; i++ )
+		{
+			removeNode(findNodeIndex(array4[i]));
+		}
+		
+		// Remove link
+		for(var i = 0, iLen = links.length; i < iLen; i++)
+		{
+			var exsit = false;
+			for(var j = 0, jLen = data.length; j < jLen; j++)
+			{
+				if( data[j].source == links[i].source.id && data[j].target == links[i].target.id)
+				{
+					exsit = true;
+					break;
+				}
+				
+			}			
+			if(exsit == false) removeLink(i);
+		}
+		
+		// Add link
+		for(var i = 0, iLen = data.length; i < iLen; i++)
+		{
+			var exsit = false;
+			for(var j = 0, jLen = links.length; j < jLen; j++)
+			{
+				if( data[i].source == links[j].source.id && data[i].target == links[j].target.id)
+				{
+					exsit = true;
+					break;
+				}
+				
+			}			
+			if(exsit == false)
+			{
+				var a = findNode(data[i].source);
+				var b = findNode(data[i].target);
+				
+				var item = {source: a, target: b};
+				addLink(item);
+			}
+		}		
+				
+		console.log("links:" + JSON.stringify(links));
+		console.log("nodes:" + JSON.stringify(nodes));
+		resize();
+	}
+	
+	function loadData() {
+		d3.csv("graph.csv?" + $.now(), function(data) {
+			totalData = data;		
+			updateData(totalData);
+		});
+    }
+	
+	function refresh() {
+		$.getJSON( "update.php?" + $.now(), function(data) {
+			if(lastModifiedDate < data.lastModifiedDate) {
+				lastModifiedDate = data.lastModifiedDate;
+				setTimeout(loadData, delay);
+			}
+		})
+    }
+	
+	refresh();
+    setInterval(refresh, 2000);
+</script>
